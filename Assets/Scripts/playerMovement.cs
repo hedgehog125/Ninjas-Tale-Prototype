@@ -5,22 +5,28 @@ using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
 	[SerializeField] private float moveSpeed;
-	//[SerializeField] private float maxSpeed;
+	[SerializeField] private int coyoteTime;
+	[SerializeField] private int maxJumpHoldTime;
+	[SerializeField] private float jumpPower;
+	[SerializeField] private float jumpHoldCurveSteepness; 
+	[SerializeField] private float jumpSpeedBoost;
 
-	private Vector2 move;
-	private bool isJumping;
+	private Vector2 moveInput;
+	private bool jumpInput;
 
 	private Rigidbody2D rb;
 	private Collider2D col;
 	private SpriteRenderer ren;
 
 	private List<GameObject> onground = new List<GameObject>();
+	private int coyoteTick;
+	private int jumpHoldTick;
 
 	void OnMove(InputValue movementValue) {
-		move = movementValue.Get<Vector2>();
+		moveInput = movementValue.Get<Vector2>();
 	}
 	void OnJump(InputValue input) {
-		isJumping = input.Get<float>() > 0;
+		jumpInput = input.Get<float>() > 0;
 	}
 
 
@@ -71,9 +77,37 @@ public class playerMovement : MonoBehaviour {
 		*/
 		//rb.AddForce(new Vector2(move.x * moveSpeed, 0));
 
-		Vector2 newVel = new Vector2(move.x * moveSpeed, rb.velocity.y);
-		if (isJumping && onground.Count != 0) {
-			newVel.y += 5;
+		Vector2 newVel = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
+
+		bool isOnGround = onground.Count != 0;
+		if (isOnGround) {
+			coyoteTick = 0;
+			
+		}
+		if ((! isOnGround) && coyoteTick < coyoteTime) {
+			isOnGround = true;
+			coyoteTick++;
+		}
+
+		if (jumpInput) {
+			if (isOnGround || jumpHoldTick < maxJumpHoldTime) {
+				jumpHoldTick++;
+				newVel.y += (jumpPower / (
+					Mathf.Sqrt(
+						jumpHoldTick * jumpHoldCurveSteepness
+					)
+					- (jumpHoldCurveSteepness - 1)
+				)) * ((Mathf.Abs(rb.velocity.x) * jumpSpeedBoost) + 1);
+				coyoteTick = coyoteTime;
+			}
+		}
+		else {
+			if (isOnGround) {
+				jumpHoldTick = 0;
+			}
+			else {
+				jumpHoldTick = maxJumpHoldTime;
+			}
 		}
 		rb.velocity = newVel;
 
