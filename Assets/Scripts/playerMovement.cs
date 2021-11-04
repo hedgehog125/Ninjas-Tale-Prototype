@@ -7,24 +7,24 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float moveSpeed;
 	[SerializeField] private int coyoteTime;
 	[SerializeField] private int maxJumpHoldTime;
+	[SerializeField] private int maxJumpBufferTime;
 	[SerializeField] private float jumpPower;
 	[SerializeField] private float jumpHoldCurveSteepness; 
 	[SerializeField] private float jumpSpeedBoost;
-	[SerializeField] private float stretchAmount;
-	[SerializeField] private float maxStretch;
+	[SerializeField] private float downFallBoost;
+
 
 	private Vector2 moveInput;
 	private bool jumpInput;
 
 	private Rigidbody2D rb;
 	private Collider2D col;
-	private SpriteRenderer ren;
 
 	public List<GameObject> onground = new List<GameObject>();
 	public List<GameObject> notBelow = new List<GameObject>();
 	private int coyoteTick;
-	private int jumpHoldTick;
-	private float stretchVel;
+	public int jumpHoldTick;
+	public int jumpBufferTick;
 
 	void OnMove(InputValue movementValue) {
 		moveInput = movementValue.Get<Vector2>();
@@ -37,7 +37,6 @@ public class playerMovement : MonoBehaviour {
 	void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<Collider2D>();
-		ren = GetComponent<SpriteRenderer>();
 	}
 
 	void OnCollisionEnter2D(Collision2D collision) {
@@ -91,21 +90,27 @@ public class playerMovement : MonoBehaviour {
 		//rb.AddForce(new Vector2(move.x * moveSpeed, 0));
 
 		Vector2 newVel = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
-		Vector3 newScale = transform.localScale;
 
 		bool isOnGround = onground.Count != 0;
 		if (isOnGround) {
 			coyoteTick = 0;
-			
 		}
 		if ((! isOnGround) && coyoteTick < coyoteTime) {
 			isOnGround = true;
 			coyoteTick++;
 		}
 
-		if (jumpInput) {
+		if (jumpInput || (jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime)) {
 			if (isOnGround || jumpHoldTick < maxJumpHoldTime) {
-				jumpHoldTick++;
+				if (isOnGround) {
+					jumpHoldTick = 1;
+					if (! jumpInput) { // Buffered
+						jumpBufferTick = maxJumpBufferTime;
+					}
+                }
+				else {
+					jumpHoldTick++;
+				}
 				newVel.y += (jumpPower / (
 					Mathf.Sqrt(
 						jumpHoldTick * jumpHoldCurveSteepness
@@ -114,31 +119,21 @@ public class playerMovement : MonoBehaviour {
 				)) * ((Mathf.Abs(rb.velocity.x) * jumpSpeedBoost) + 1);
 				coyoteTick = coyoteTime;
 			}
+			else {
+				if (jumpBufferTick == maxJumpBufferTime) {
+					jumpInput = false;
+                }
+				jumpBufferTick++;
+            }
 		}
 		else {
-			if (isOnGround) {
-				jumpHoldTick = 0;
-			}
-			else {
-				jumpHoldTick = maxJumpHoldTime;
-			}
+			jumpBufferTick = 0;
+			jumpHoldTick = maxJumpBufferTime;
 		}
 
 		if ((! isOnGround) && moveInput.y < -0.3) {
-			newVel.y -= 0.5f;
+			newVel.y -= downFallBoost;
         }
 		rb.velocity = newVel;
-
-		// Flipping left/right
-		if (Mathf.Abs(rb.velocity.x) > 0.1f) {
-			ren.flipX = rb.velocity.x < 0;
-		}
-
-		stretchVel += rb.velocity.y * stretchAmount;
-		newScale.x = Mathf.Max(Mathf.Min(1.0f + stretchVel, 1 + maxStretch), 1 - maxStretch);
-		newScale.y = Mathf.Max(Mathf.Min(1.0f - stretchVel, 1 + maxStretch), 1 - maxStretch);
-		stretchVel *= 0.8f;
-
-		transform.localScale = newScale;
 	}
 }
