@@ -13,6 +13,8 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float jumpHoldCurveSteepness; 
 	[SerializeField] private float jumpSpeedBoost;
 	[SerializeField] private float downFallBoost;
+	[SerializeField] private float wallJumpPowerX;
+	[SerializeField] private float wallJumpPowerY;
 
 
 	private Vector2 moveInput;
@@ -31,6 +33,8 @@ public class playerMovement : MonoBehaviour {
 	private bool hasWallJumped;
 	private float wallJumpHeight;
 
+	private float normalGravity;
+
 
 	// Modified by visual child
 	public bool direction = true;
@@ -46,23 +50,30 @@ public class playerMovement : MonoBehaviour {
 	private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<Collider2D>();
+
+		normalGravity = rb.gravityScale;
 	}
 	private bool DetectGrounded() {
 		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.down, 0.1f, groundLayer).collider;
 		return obCollider != null;
     }
-	private bool DetectWall() {
-		if (Mathf.Abs(rb.velocity.x) < 1) return false;
+	private bool DetectWallSlide() {
+		if (rb.velocity.y > 0.1f) return false;
+		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, rb.velocity.x < 0? Vector2.left : Vector2.right, 0.1f, groundLayer).collider;
+		return obCollider != null;
+	}
+	private bool DetectCanWallJump(bool willWallSlide) {
+		if (! willWallSlide) return false;
+
 		// Make sure the player isn't turning
+		if (Mathf.Abs(rb.velocity.x) < 0.2f) return true;
 		if (rb.velocity.x > 0) {
 			if (! direction) return false;
         }
 		else {
 			if (direction) return false;
 		}
-
-		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, rb.velocity.x < 0? Vector2.left : Vector2.right, 0.1f, groundLayer).collider;
-		return obCollider != null;
+		return true;
 	}
 
 	private bool GroundDetectTick() {
@@ -89,7 +100,6 @@ public class playerMovement : MonoBehaviour {
 			newVel.y -= downFallBoost;
 		}
 	}
-
 	private void JumpTick(ref Vector2 newVel, bool isOnGround) {
 		if (jumpInput || (jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime)) {
 			if ((isOnGround && (! hasJumped)) || jumpHoldTick < maxJumpHoldTime) {
@@ -123,6 +133,36 @@ public class playerMovement : MonoBehaviour {
 			jumpHoldTick = maxJumpBufferTime;
 		}
 	}
+	private void WallTick(ref Vector2 newVel, bool isOnGround, bool isOnWall, bool canWallJump) {
+		if (isOnWall) {
+			rb.gravityScale = 0.25f;
+		}
+		else {
+			rb.gravityScale = normalGravity;
+        }
+
+
+		if (isOnGround) {
+			hasWallJumped = false;
+		}
+		else if (isOnWall) {
+			canWallJump = canWallJump && (! hasWallJumped);
+			if (! canWallJump) {
+				if (direction != wallJumpDirection) { // Opposite wall
+					canWallJump = true;
+                }
+				else if (transform.position.y <= wallJumpHeight) { // Fallen below last jump point
+					canWallJump = true;
+                }
+            }
+
+			if (jumpInput && canWallJump) {
+				rb.gravityScale = normalGravity;
+				newVel.x = direction? -wallJumpPowerX : wallJumpPowerX;
+				newVel.y += wallJumpPowerY;
+			}
+		}
+    }
 
 	private void FixedUpdate() {
 		// This gives a less physics-y feel compared to addForce and means movements don't last as long
@@ -142,9 +182,12 @@ public class playerMovement : MonoBehaviour {
 
 		Vector2 newVel = new Vector2(0, rb.velocity.y);
 		bool isOnGround = GroundDetectTick();
+		bool isOnWall = DetectWallSlide();
+		bool canWallJump = DetectCanWallJump(isOnWall);
 
 		MoveTick(ref newVel, isOnGround);
 		JumpTick(ref newVel, isOnGround);
+		WallTick(ref newVel, isOnGround, isOnWall, canWallJump);
 		
 		rb.velocity = newVel;
 	}

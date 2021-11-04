@@ -5426,6 +5426,8 @@ MonoBehaviour:
   jumpHoldCurveSteepness: 2
   jumpSpeedBoost: 0.01
   downFallBoost: 0.6
+  wallJumpPowerX: 10
+  wallJumpPowerY: 10
   direction: 1
 --- !u!114 &1438377205
 MonoBehaviour:
