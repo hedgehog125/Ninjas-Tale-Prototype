@@ -11,14 +11,16 @@ public class spriteVisible : MonoBehaviour
 
     private Rigidbody2D rb;
     private SpriteRenderer ren;
+    private playerMovement playerScript;
 
     private float stretchVel;
 
     private void Awake() {
         rb = playerPhysics.GetComponent<Rigidbody2D>();
         ren = GetComponent<SpriteRenderer>();
+        playerScript = playerPhysics.GetComponent<playerMovement>();
     }
-    void FixedUpdate() {
+   private void FixedUpdate() {
         // Flipping left/right
         if (Mathf.Abs(rb.velocity.x) > 0.1f) {
             ren.flipX = rb.velocity.x < 0;
@@ -31,5 +33,6 @@ public class spriteVisible : MonoBehaviour
         stretchVel *= stretchMaintenance;
 
         transform.localScale = newScale;
+        playerScript.direction = ! ren.flipX;
     }
 }

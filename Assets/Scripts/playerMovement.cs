@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
+	[SerializeField] private LayerMask groundLayer;
 	[SerializeField] private float moveSpeed;
 	[SerializeField] private int coyoteTime;
 	[SerializeField] private int maxJumpHoldTime;
@@ -20,60 +21,110 @@ public class playerMovement : MonoBehaviour {
 	private Rigidbody2D rb;
 	private Collider2D col;
 
-	public List<GameObject> onground = new List<GameObject>();
-	public List<GameObject> notBelow = new List<GameObject>();
 	private int coyoteTick;
-	public int jumpHoldTick;
-	public int jumpBufferTick;
+	private int jumpHoldTick;
+	private int jumpBufferTick;
+	private bool hasJumped;
+	private bool wasOnGround;
 
-	void OnMove(InputValue movementValue) {
+	private bool wallJumpDirection;
+	private bool hasWallJumped;
+	private float wallJumpHeight;
+
+
+	// Modified by visual child
+	public bool direction = true;
+
+	private void OnMove(InputValue movementValue) {
 		moveInput = movementValue.Get<Vector2>();
 	}
-	void OnJump(InputValue input) {
+	private void OnJump(InputValue input) {
 		jumpInput = input.Get<float>() > 0;
 	}
 
 
-	void Awake() {
+	private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<Collider2D>();
 	}
+	private bool DetectGrounded() {
+		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.down, 0.1f, groundLayer).collider;
+		return obCollider != null;
+    }
+	private bool DetectWall() {
+		if (Mathf.Abs(rb.velocity.x) < 1) return false;
+		// Make sure the player isn't turning
+		if (rb.velocity.x > 0) {
+			if (! direction) return false;
+        }
+		else {
+			if (direction) return false;
+		}
 
-	void OnCollisionEnter2D(Collision2D collision) {
-		if (collision.gameObject.CompareTag("Standable")) {
-			float bottomY = transform.position.y - (col.bounds.size.y / 4);
-			bool below = false;
-			int count = collision.contactCount;
-			for (int i = 0; i < count; i++) {
-				Vector2 point = collision.GetContact(i).point;
-				if (point.y <= bottomY) { // Point of contact has to be in the bottom quarter.
-					below = true;
-					break;
-				}
+		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, rb.velocity.x < 0? Vector2.left : Vector2.right, 0.1f, groundLayer).collider;
+		return obCollider != null;
+	}
+
+	private bool GroundDetectTick() {
+		bool isOnGround = DetectGrounded();
+		if (isOnGround) {
+			coyoteTick = 0;
+		}
+		if ((! isOnGround) && coyoteTick < coyoteTime) {
+			isOnGround = true;
+			coyoteTick++;
+		}
+		if (isOnGround != wasOnGround) {
+			wasOnGround = isOnGround;
+			if (isOnGround) {
+				hasJumped = false;
 			}
-			if (below) {
-				onground.Add(collision.gameObject);
+        }
+
+		return isOnGround;
+	}
+    private void MoveTick(ref Vector2 newVel, bool isOnGround) {
+		newVel.x += moveInput.x * moveSpeed;
+		if ((! isOnGround) && moveInput.y < -0.3) {
+			newVel.y -= downFallBoost;
+		}
+	}
+
+	private void JumpTick(ref Vector2 newVel, bool isOnGround) {
+		if (jumpInput || (jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime)) {
+			if ((isOnGround && (! hasJumped)) || jumpHoldTick < maxJumpHoldTime) {
+				if (isOnGround && (! hasJumped)) {
+					jumpHoldTick = 1;
+					if (! jumpInput) { // Buffered
+						jumpBufferTick = maxJumpBufferTime;
+					}
+				}
+				else {
+					jumpHoldTick++;
+				}
+				hasJumped = true;
+				newVel.y += (jumpPower / (
+					Mathf.Sqrt(
+						jumpHoldTick * jumpHoldCurveSteepness
+					)
+					- (jumpHoldCurveSteepness - 1)
+				)) * ((Mathf.Abs(rb.velocity.x) * jumpSpeedBoost) + 1);
+				coyoteTick = coyoteTime;
 			}
 			else {
-				notBelow.Add(collision.gameObject);
-            }
+				if (jumpBufferTick == maxJumpBufferTime) {
+					jumpInput = false;
+				}
+				jumpBufferTick++;
+			}
 		}
-
-	}
-	void OnCollisionStay2D(Collision2D collision) {
-		if (collision.gameObject.CompareTag("Standable") && notBelow.Contains(collision.gameObject)) {
-			notBelow.Remove(collision.gameObject);
-			OnCollisionEnter2D(collision);
-		}
-	}
-	void OnCollisionExit2D(Collision2D collision) {
-		if (collision.gameObject.CompareTag("Standable")) {
-			onground.Remove(collision.gameObject);
-			notBelow.Remove(collision.gameObject);
+		else {
+			jumpBufferTick = 0;
+			jumpHoldTick = maxJumpBufferTime;
 		}
 	}
 
-	void FixedUpdate() {
+	private void FixedUpdate() {
 		// This gives a less physics-y feel compared to addForce and means movements don't last as long
 
 		/*
@@ -89,51 +140,12 @@ public class playerMovement : MonoBehaviour {
 		*/
 		//rb.AddForce(new Vector2(move.x * moveSpeed, 0));
 
-		Vector2 newVel = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
+		Vector2 newVel = new Vector2(0, rb.velocity.y);
+		bool isOnGround = GroundDetectTick();
 
-		bool isOnGround = onground.Count != 0;
-		if (isOnGround) {
-			coyoteTick = 0;
-		}
-		if ((! isOnGround) && coyoteTick < coyoteTime) {
-			isOnGround = true;
-			coyoteTick++;
-		}
-
-		if (jumpInput || (jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime)) {
-			if (isOnGround || jumpHoldTick < maxJumpHoldTime) {
-				if (isOnGround) {
-					jumpHoldTick = 1;
-					if (! jumpInput) { // Buffered
-						jumpBufferTick = maxJumpBufferTime;
-					}
-                }
-				else {
-					jumpHoldTick++;
-				}
-				newVel.y += (jumpPower / (
-					Mathf.Sqrt(
-						jumpHoldTick * jumpHoldCurveSteepness
-					)
-					- (jumpHoldCurveSteepness - 1)
-				)) * ((Mathf.Abs(rb.velocity.x) * jumpSpeedBoost) + 1);
-				coyoteTick = coyoteTime;
-			}
-			else {
-				if (jumpBufferTick == maxJumpBufferTime) {
-					jumpInput = false;
-                }
-				jumpBufferTick++;
-            }
-		}
-		else {
-			jumpBufferTick = 0;
-			jumpHoldTick = maxJumpBufferTime;
-		}
-
-		if ((! isOnGround) && moveInput.y < -0.3) {
-			newVel.y -= downFallBoost;
-        }
+		MoveTick(ref newVel, isOnGround);
+		JumpTick(ref newVel, isOnGround);
+		
 		rb.velocity = newVel;
 	}
 }
