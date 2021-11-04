@@ -10,6 +10,8 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float jumpPower;
 	[SerializeField] private float jumpHoldCurveSteepness; 
 	[SerializeField] private float jumpSpeedBoost;
+	[SerializeField] private float stretchAmount;
+	[SerializeField] private float maxStretch;
 
 	private Vector2 moveInput;
 	private bool jumpInput;
@@ -18,9 +20,11 @@ public class playerMovement : MonoBehaviour {
 	private Collider2D col;
 	private SpriteRenderer ren;
 
-	private List<GameObject> onground = new List<GameObject>();
+	public List<GameObject> onground = new List<GameObject>();
+	public List<GameObject> notBelow = new List<GameObject>();
 	private int coyoteTick;
 	private int jumpHoldTick;
+	private float stretchVel;
 
 	void OnMove(InputValue movementValue) {
 		moveInput = movementValue.Get<Vector2>();
@@ -34,7 +38,6 @@ public class playerMovement : MonoBehaviour {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<Collider2D>();
 		ren = GetComponent<SpriteRenderer>();
-
 	}
 
 	void OnCollisionEnter2D(Collision2D collision) {
@@ -52,12 +55,22 @@ public class playerMovement : MonoBehaviour {
 			if (below) {
 				onground.Add(collision.gameObject);
 			}
+			else {
+				notBelow.Add(collision.gameObject);
+            }
 		}
 
+	}
+	void OnCollisionStay2D(Collision2D collision) {
+		if (collision.gameObject.CompareTag("Standable") && notBelow.Contains(collision.gameObject)) {
+			notBelow.Remove(collision.gameObject);
+			OnCollisionEnter2D(collision);
+		}
 	}
 	void OnCollisionExit2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("Standable")) {
 			onground.Remove(collision.gameObject);
+			notBelow.Remove(collision.gameObject);
 		}
 	}
 
@@ -78,6 +91,7 @@ public class playerMovement : MonoBehaviour {
 		//rb.AddForce(new Vector2(move.x * moveSpeed, 0));
 
 		Vector2 newVel = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
+		Vector3 newScale = transform.localScale;
 
 		bool isOnGround = onground.Count != 0;
 		if (isOnGround) {
@@ -109,11 +123,22 @@ public class playerMovement : MonoBehaviour {
 				jumpHoldTick = maxJumpHoldTime;
 			}
 		}
+
+		if ((! isOnGround) && moveInput.y < -0.3) {
+			newVel.y -= 0.5f;
+        }
 		rb.velocity = newVel;
 
 		// Flipping left/right
 		if (Mathf.Abs(rb.velocity.x) > 0.1f) {
 			ren.flipX = rb.velocity.x < 0;
 		}
+
+		stretchVel += rb.velocity.y * stretchAmount;
+		newScale.x = Mathf.Max(Mathf.Min(1.0f + stretchVel, 1 + maxStretch), 1 - maxStretch);
+		newScale.y = Mathf.Max(Mathf.Min(1.0f - stretchVel, 1 + maxStretch), 1 - maxStretch);
+		stretchVel *= 0.8f;
+
+		transform.localScale = newScale;
 	}
 }
