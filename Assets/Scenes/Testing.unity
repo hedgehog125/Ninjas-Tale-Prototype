@@ -5164,6 +5164,8 @@ MonoBehaviour:
   stretchAmount: 0.003
   maxStretch: 0.2
   stretchMaintenance: 0.8
+  walkBobSpeed: 0.1
+  walkBobAmount: 0.05
 --- !u!212 &938400111
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -6022,6 +6024,9 @@ MonoBehaviour:
   wallSlidingSpeed: 0.01
   wallJumpPowerX: 20
   wallJumpPowerY: 10
+  moveInput: {x: 0, y: 0}
+  moveInputNeutralX: 1
+  moveInputNeutralY: 1
   direction: 1
 --- !u!114 &1438377205
 MonoBehaviour:
