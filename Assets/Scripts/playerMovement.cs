@@ -121,12 +121,12 @@ public class playerMovement : MonoBehaviour {
 			isOnGround = true;
 			coyoteTick++;
 		}
+		if (isOnGround) {
+			hasJumped = false;
+			hasWallJumped = false;
+		}
 		if (isOnGround != wasOnGround) {
 			wasOnGround = isOnGround;
-			if (isOnGround) {
-				hasJumped = false;
-				hasWallJumped = false;
-			}
         }
 
 		return isOnGround;
