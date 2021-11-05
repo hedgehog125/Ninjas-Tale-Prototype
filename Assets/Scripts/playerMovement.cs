@@ -88,21 +88,13 @@ public class playerMovement : MonoBehaviour {
 			if (moveInputNeutralX) return false;
 			if (moveInput.x > 0 != direction) return false; // Not moving towards the wall
 		}
+		if (hasWallJumped) { // Extra requirements if the player has wall jumped since touching the ground
+			if (direction == wallJumpDirection && transform.position.y > wallJumpHeight) { // The player last jumped off this wall from a lower height, can't wall jump
+				return false;
+			}
+		}
 
 		hasJumped = false;
-		return true;
-	}
-	private bool DetectCanWallJump(bool willWallSlide) {
-		if (! willWallSlide) return false;
-
-		// Make sure the player isn't turning
-		if (Mathf.Abs(rb.velocity.x) < 0.2f) return true;
-		if (rb.velocity.x > 0) {
-			if (! direction) return false;
-        }
-		else {
-			if (direction) return false;
-		}
 		return true;
 	}
 
@@ -119,6 +111,7 @@ public class playerMovement : MonoBehaviour {
 			wasOnGround = isOnGround;
 			if (isOnGround) {
 				hasJumped = false;
+				hasWallJumped = false;
 			}
         }
 
@@ -179,7 +172,7 @@ public class playerMovement : MonoBehaviour {
 			jumpHoldTick = maxJumpHoldTime;
 		}
 	}
-	private void WallTick(ref Vector2 vel, bool isOnGround, bool isOnWall, bool canWallJump) {
+	private void WallTick(ref Vector2 vel, bool isOnGround, bool isOnWall) {
 		if (isOnWall != wasOnWall) {
 			if (isOnWall) {
 				rb.gravityScale = wallSlidingSpeed;
@@ -197,20 +190,14 @@ public class playerMovement : MonoBehaviour {
 			hasWallJumped = false;
 		}
 		else if (isOnWall) {
-			canWallJump = canWallJump && (! hasWallJumped);
-			if (! canWallJump) {
-				if (direction != wallJumpDirection) { // Opposite wall
-					canWallJump = true;
-                }
-				else if (transform.position.y <= wallJumpHeight) { // Fallen below last jump point
-					canWallJump = true;
-                }
-            }
-
-			if (jumpInput && canWallJump) {
+			if (jumpInput) {
 				rb.gravityScale = normalGravity;
 				vel.x = direction? -wallJumpPowerX : wallJumpPowerX;
 				vel.y += wallJumpPowerY;
+
+				hasWallJumped = true;
+				wallJumpDirection = direction;
+				wallJumpHeight = transform.position.y;
 			}
 		}
     }
@@ -226,11 +213,10 @@ public class playerMovement : MonoBehaviour {
 
 		bool isOnGround = GroundDetectTick();
 		bool isOnWall = DetectWallSlideTick();
-		bool canWallJump = DetectCanWallJump(isOnWall);
 
 		MoveTick(ref vel, isOnGround, isOnWall);
 		JumpTick(ref vel, isOnGround);
-		WallTick(ref vel, isOnGround, isOnWall, canWallJump);
+		WallTick(ref vel, isOnGround, isOnWall);
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
 	}
