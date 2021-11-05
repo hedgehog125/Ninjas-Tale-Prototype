@@ -5,7 +5,9 @@ using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
 	[SerializeField] private LayerMask groundLayer;
-	[SerializeField] private float moveSpeed;
+	[SerializeField] private float walkAcceleration;
+	[SerializeField] private float maxWalkSpeed;
+	[SerializeField] private float moveDeadzone;
 	[SerializeField] private int coyoteTime;
 	[SerializeField] private int maxJumpHoldTime;
 	[SerializeField] private int maxJumpBufferTime;
@@ -13,11 +15,14 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float jumpHoldCurveSteepness; 
 	[SerializeField] private float jumpSpeedBoost;
 	[SerializeField] private float downFallBoost;
+	[SerializeField] private float wallSlidingSpeed;
 	[SerializeField] private float wallJumpPowerX;
 	[SerializeField] private float wallJumpPowerY;
 
 
 	private Vector2 moveInput;
+	private bool moveInputNeutralX = true;
+	private bool moveInputNeutralY = true;
 	private bool jumpInput;
 
 	private Rigidbody2D rb;
@@ -29,6 +34,8 @@ public class playerMovement : MonoBehaviour {
 	private bool hasJumped;
 	private bool wasOnGround;
 
+	private bool wasOnWall;
+	private bool wallSlideDirection;
 	private bool wallJumpDirection;
 	private bool hasWallJumped;
 	private float wallJumpHeight;
@@ -41,6 +48,15 @@ public class playerMovement : MonoBehaviour {
 
 	private void OnMove(InputValue movementValue) {
 		moveInput = movementValue.Get<Vector2>();
+
+		moveInputNeutralX = Mathf.Abs(moveInput.x) < moveDeadzone;
+		if (moveInputNeutralX) {
+			moveInput.x = 0;
+		}
+		moveInputNeutralY = Mathf.Abs(moveInput.y) < moveDeadzone;
+		if (moveInputNeutralY) {
+			moveInput.y = 0;
+		}
 	}
 	private void OnJump(InputValue input) {
 		jumpInput = input.Get<float>() > 0;
@@ -54,13 +70,21 @@ public class playerMovement : MonoBehaviour {
 		normalGravity = rb.gravityScale;
 	}
 	private bool DetectGrounded() {
-		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.down, 0.1f, groundLayer).collider;
+		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.down, 0.02f, groundLayer).collider;
 		return obCollider != null;
     }
-	private bool DetectWallSlide() {
-		if (rb.velocity.y > 0.1f) return false;
-		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, rb.velocity.x < 0? Vector2.left : Vector2.right, 0.1f, groundLayer).collider;
-		return obCollider != null;
+	private bool DetectWallSlideTick() {
+		if (rb.velocity.y > 0) return false;
+		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer).collider;
+		if (obCollider == null) return false;
+
+		if (! wasOnWall) {
+			if (moveInputNeutralX) return false;
+			if (moveInput.x > 0 != direction) return false; // Not moving towards the wall
+		}
+
+		hasJumped = false;
+		return true;
 	}
 	private bool DetectCanWallJump(bool willWallSlide) {
 		if (! willWallSlide) return false;
@@ -94,52 +118,73 @@ public class playerMovement : MonoBehaviour {
 
 		return isOnGround;
 	}
-    private void MoveTick(ref Vector2 newVel, bool isOnGround) {
-		newVel.x += moveInput.x * moveSpeed;
-		if ((! isOnGround) && moveInput.y < -0.3) {
-			newVel.y -= downFallBoost;
+    private void MoveTick(ref Vector2 vel, bool isOnGround, bool isOnWall) {
+		if ((! isOnGround) && moveInput.y < -moveDeadzone) {
+			vel.y -= downFallBoost;
+		}
+
+		bool canMove = true;
+		if (isOnWall) { // You can't move towards the wall
+			if (moveInput.x > 0) {
+				if (wallSlideDirection) canMove = false;
+			}
+			else if (! wallSlideDirection) canMove = false;
+		}
+		if (canMove) {
+			vel.x += moveInput.x * walkAcceleration;
 		}
 	}
-	private void JumpTick(ref Vector2 newVel, bool isOnGround) {
-		if (jumpInput || (jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime)) {
-			if ((isOnGround && (! hasJumped)) || jumpHoldTick < maxJumpHoldTime) {
-				if (isOnGround && (! hasJumped)) {
+	private void JumpTick(ref Vector2 vel, bool isOnGround) {
+		bool buffered = jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime;
+		if (jumpInput || buffered) {
+			bool justStarted = isOnGround && (! hasJumped);
+			if (justStarted || jumpHoldTick < maxJumpHoldTime) {
+				if (justStarted) {
 					jumpHoldTick = 1;
-					if (! jumpInput) { // Buffered
+					jumpBufferTick = 0;
+					if (! jumpInput) { // Unbuffer
 						jumpBufferTick = maxJumpBufferTime;
 					}
 				}
 				else {
 					jumpHoldTick++;
 				}
+
 				hasJumped = true;
-				newVel.y += (jumpPower / (
+				vel.y += (jumpPower / (
 					Mathf.Sqrt(
 						jumpHoldTick * jumpHoldCurveSteepness
 					)
 					- (jumpHoldCurveSteepness - 1)
 				)) * ((Mathf.Abs(rb.velocity.x) * jumpSpeedBoost) + 1);
 				coyoteTick = coyoteTime;
+
 			}
-			else {
+			if (! isOnGround) {
 				if (jumpBufferTick == maxJumpBufferTime) {
 					jumpInput = false;
 				}
 				jumpBufferTick++;
 			}
 		}
-		else {
+
+		if (! jumpInput) {
 			jumpBufferTick = 0;
-			jumpHoldTick = maxJumpBufferTime;
+			jumpHoldTick = maxJumpHoldTime;
 		}
 	}
-	private void WallTick(ref Vector2 newVel, bool isOnGround, bool isOnWall, bool canWallJump) {
-		if (isOnWall) {
-			rb.gravityScale = 0.25f;
+	private void WallTick(ref Vector2 vel, bool isOnGround, bool isOnWall, bool canWallJump) {
+		if (isOnWall != wasOnWall) {
+			if (isOnWall) {
+				rb.gravityScale = wallSlidingSpeed;
+				vel.y = 0;
+				wallSlideDirection = vel.x > 0;
+			}
+			else {
+				rb.gravityScale = normalGravity;
+			}
+			wasOnWall = isOnWall;
 		}
-		else {
-			rb.gravityScale = normalGravity;
-        }
 
 
 		if (isOnGround) {
@@ -158,8 +203,8 @@ public class playerMovement : MonoBehaviour {
 
 			if (jumpInput && canWallJump) {
 				rb.gravityScale = normalGravity;
-				newVel.x = direction? -wallJumpPowerX : wallJumpPowerX;
-				newVel.y += wallJumpPowerY;
+				vel.x = direction? -wallJumpPowerX : wallJumpPowerX;
+				vel.y += wallJumpPowerY;
 			}
 		}
     }
@@ -180,15 +225,15 @@ public class playerMovement : MonoBehaviour {
 		*/
 		//rb.AddForce(new Vector2(move.x * moveSpeed, 0));
 
-		Vector2 newVel = new Vector2(0, rb.velocity.y);
+		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 		bool isOnGround = GroundDetectTick();
-		bool isOnWall = DetectWallSlide();
+		bool isOnWall = DetectWallSlideTick();
 		bool canWallJump = DetectCanWallJump(isOnWall);
 
-		MoveTick(ref newVel, isOnGround);
-		JumpTick(ref newVel, isOnGround);
-		WallTick(ref newVel, isOnGround, isOnWall, canWallJump);
-		
-		rb.velocity = newVel;
+		MoveTick(ref vel, isOnGround, isOnWall);
+		JumpTick(ref vel, isOnGround);
+		WallTick(ref vel, isOnGround, isOnWall, canWallJump);
+
+		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
 	}
 }
