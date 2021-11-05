@@ -6007,9 +6007,11 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
-  walkAcceleration: 0.75
-  maxWalkSpeed: 10
+  walkAcceleration: 1
+  maxWalkSpeed: 5
   moveDeadzone: 0.3
+  neutralSpeedMaintenance: 0.95
+  turnSpeedMaintenance: 0.9
   coyoteTime: 5
   maxJumpHoldTime: 7
   maxJumpBufferTime: 5

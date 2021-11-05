@@ -8,21 +8,27 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float walkAcceleration;
 	[SerializeField] private float maxWalkSpeed;
 	[SerializeField] private float moveDeadzone;
+	[SerializeField] private float neutralSpeedMaintenance;
+	[SerializeField] private float turnSpeedMaintenance;
+
+
 	[SerializeField] private int coyoteTime;
 	[SerializeField] private int maxJumpHoldTime;
 	[SerializeField] private int maxJumpBufferTime;
 	[SerializeField] private float jumpPower;
 	[SerializeField] private float jumpHoldCurveSteepness; 
 	[SerializeField] private float jumpSpeedBoost;
+
 	[SerializeField] private float downFallBoost;
 	[SerializeField] private float wallSlidingSpeed;
 	[SerializeField] private float wallJumpPowerX;
 	[SerializeField] private float wallJumpPowerY;
 
 
-	private Vector2 moveInput;
-	private bool moveInputNeutralX = true;
-	private bool moveInputNeutralY = true;
+	// Needs to be read by the visual child
+	public Vector2 moveInput;
+	public bool moveInputNeutralX = true;
+	public bool moveInputNeutralY = true;
 	private bool jumpInput;
 
 	private Rigidbody2D rb;
@@ -210,22 +216,14 @@ public class playerMovement : MonoBehaviour {
     }
 
 	private void FixedUpdate() {
-		// This gives a less physics-y feel compared to addForce and means movements don't last as long
-
-		/*
-		Vector2 newVel = rb.velocity;
-		newVel.x += move.x * moveSpeed;
-		if (Mathf.Abs(newVel.x) > maxSpeed) newVel.x = maxSpeed * Mathf.Sign(newVel.x);
-
-		if (jump) {
-			newVel.y += 2;
+		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
+		if (moveInputNeutralX) {
+			vel.x *= neutralSpeedMaintenance;
+		}
+		else if (direction != moveInput.x > 0) {
+			vel.x *= turnSpeedMaintenance;
 		}
 
-		rb.velocity = newVel;
-		*/
-		//rb.AddForce(new Vector2(move.x * moveSpeed, 0));
-
-		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 		bool isOnGround = GroundDetectTick();
 		bool isOnWall = DetectWallSlideTick();
 		bool canWallJump = DetectCanWallJump(isOnWall);
