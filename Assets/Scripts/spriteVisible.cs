@@ -40,7 +40,7 @@ public class spriteVisible : MonoBehaviour
         newScale.y = Mathf.Max(Mathf.Min(1.0f - stretchVel, 1 + maxStretch), 1 - maxStretch);
         stretchVel *= stretchMaintenance;
 
-		if (playerScript.moveInputNeutralX) {
+		if (playerScript.moveInputNeutralX || (! playerScript.wasOnGround)) {
 			if (walkAnimation) {
 				if (walkAnimationEnding) {
 					walkAnimationEnding = false;

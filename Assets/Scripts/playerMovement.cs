@@ -23,6 +23,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float wallSlidingSpeed;
 	[SerializeField] private float wallJumpPowerX;
 	[SerializeField] private float wallJumpPowerY;
+	[SerializeField] private int wallJumpPreventBackwardsTime;
 
 
 	// Needs to be read by the visual child
@@ -38,13 +39,15 @@ public class playerMovement : MonoBehaviour {
 	private int jumpHoldTick;
 	private int jumpBufferTick;
 	private bool hasJumped;
-	private bool wasOnGround;
 
-	private bool wasOnWall;
+	public bool wasOnWall;
+	public bool wasOnGround;
+
 	private bool wallSlideDirection;
 	private bool wallJumpDirection;
 	private bool hasWallJumped;
 	private float wallJumpHeight;
+	private int wallJumpPreventBackwardsTick;
 
 	private float normalGravity;
 
@@ -81,18 +84,29 @@ public class playerMovement : MonoBehaviour {
     }
 	private bool DetectWallSlideTick() {
 		if (rb.velocity.y > 0) return false;
-		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer).collider;
-		if (obCollider == null) return false;
+		RaycastHit2D raycast = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
+		if (raycast.collider == null) return false;
+		float distance = Mathf.Max(raycast.distance - 0.05f, 0);
 
+
+		bool canSlide = true;
 		if (! wasOnWall) {
-			if (moveInputNeutralX) return false;
-			if (moveInput.x > 0 != direction) return false; // Not moving towards the wall
+			if (moveInputNeutralX) canSlide = false;
+			else if (moveInput.x > 0 != direction) canSlide = false; // Not moving towards the wall
 		}
-		if (hasWallJumped) { // Extra requirements if the player has wall jumped since touching the ground
+		if (canSlide && hasWallJumped) { // Extra requirements if the player has wall jumped since touching the ground
 			if (direction == wallJumpDirection && transform.position.y > wallJumpHeight) { // The player last jumped off this wall from a lower height, can't wall jump
-				return false;
+				canSlide = false;
 			}
 		}
+
+		if (! canSlide) {
+			// To stop friction
+			distance = raycast.distance;
+			return false;
+		}
+		transform.position = new Vector2(transform.position.x + (direction ? -distance : distance), transform.position.y);
+		if (! canSlide) return false;
 
 		hasJumped = false;
 		return true;
@@ -117,18 +131,34 @@ public class playerMovement : MonoBehaviour {
 
 		return isOnGround;
 	}
-    private void MoveTick(ref Vector2 vel, bool isOnGround, bool isOnWall) {
-		if ((! isOnGround) && moveInput.y < -moveDeadzone) {
-			vel.y -= downFallBoost;
+    private void MoveTick(ref Vector2 vel, bool isOnGround, ref bool isOnWall) {
+		if ((! isOnGround) && (! moveInputNeutralY)) {
+			if (isOnWall) {
+				wasOnWall = false;
+				isOnWall = false; // Only for this frame
+				rb.gravityScale = normalGravity;
+				transform.position = new Vector2(transform.position.x + (direction ? -0.025f : 0.025f), transform.position.y); // Move away from the wall slightly to stop friction
+
+				// So you have to press down again to fall faster
+				moveInputNeutralY = true;
+				moveInput.y = 0;
+			}
+			else {
+				vel.y -= downFallBoost;
+			}
 		}
 
 		bool canMove = true;
-		if (isOnWall) { // You can't move towards the wall
+		if (isOnWall || wallJumpPreventBackwardsTick != 0) { // You can't move towards the wall
 			if (moveInput.x > 0) {
 				if (wallSlideDirection) canMove = false;
 			}
 			else if (! wallSlideDirection) canMove = false;
+			if (wallJumpPreventBackwardsTick != 0) {
+				wallJumpPreventBackwardsTick--;
+			}
 		}
+
 		if (canMove) {
 			vel.x += moveInput.x * walkAcceleration;
 		}
@@ -188,6 +218,7 @@ public class playerMovement : MonoBehaviour {
 
 		if (isOnGround) {
 			hasWallJumped = false;
+			wallJumpPreventBackwardsTick = 0;
 		}
 		else if (isOnWall) {
 			if (jumpInput) {
@@ -198,6 +229,7 @@ public class playerMovement : MonoBehaviour {
 				hasWallJumped = true;
 				wallJumpDirection = direction;
 				wallJumpHeight = transform.position.y;
+				wallJumpPreventBackwardsTick = wallJumpPreventBackwardsTime;
 			}
 		}
     }
@@ -214,7 +246,7 @@ public class playerMovement : MonoBehaviour {
 		bool isOnGround = GroundDetectTick();
 		bool isOnWall = DetectWallSlideTick();
 
-		MoveTick(ref vel, isOnGround, isOnWall);
+		MoveTick(ref vel, isOnGround, ref isOnWall);
 		JumpTick(ref vel, isOnGround);
 		WallTick(ref vel, isOnGround, isOnWall);
 

@@ -6287,9 +6287,10 @@ MonoBehaviour:
   jumpHoldCurveSteepness: 2
   jumpSpeedBoost: 0.01
   downFallBoost: 0.6
-  wallSlidingSpeed: 0.01
+  wallSlidingSpeed: 0.4
   wallJumpPowerX: 20
   wallJumpPowerY: 10
+  wallJumpPreventBackwardsTime: 15
   moveInput: {x: 0, y: 0}
   moveInputNeutralX: 1
   moveInputNeutralY: 1
