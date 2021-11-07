@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 using System.Linq;
 
 public class tilePathFinder : MonoBehaviour {
+	// These are public instead of serialised so they can also be modified by other scripts
 	public Vector2 setTarget;
 	public GameObject tilesObject;
 	public int maxSearchDistance;
@@ -15,13 +16,16 @@ public class tilePathFinder : MonoBehaviour {
 	public int maxJumpHeight;
 	public List<string> passableTiles;
 	public List<int> actionTimes;
-	public string state;
 	public GameObject pathSquare;
+
+	public string state;
+	public float findTime;
 
 	private Hashtable passableTilesIndex = new Hashtable();
 	private List<Vector2Int> activePath;
     private Tilemap tilemap;
-    private Rigidbody2D rb;
+	private CompositeCollider2D tilemapCollider;
+	private Rigidbody2D rb;
 	private int pathIndex;
 	private int pathDelay;
 
@@ -30,6 +34,7 @@ public class tilePathFinder : MonoBehaviour {
     }
     void Start()  {
         tilemap = tilesObject.GetComponent<Tilemap>();
+		tilemapCollider = tilesObject.GetComponent<CompositeCollider2D>();
 
 		IndexPassables();
 		activePath = FindPath(transform.position, setTarget);
@@ -60,13 +65,17 @@ public class tilePathFinder : MonoBehaviour {
 	}
 
 	private List<Vector2Int> FindPath(Vector2Int start, Vector2Int target) {
+		performance.Stopwatch stopwatch = new performance.Stopwatch();
+		stopwatch.Start();
+
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target.x, target.y));
 		if (! isPassable(GetTileName(target3))) {
 			state = "nonPassableTarget";
+			findTime = stopwatch.ElapsedMilliseconds;
 			return null;
         }
 
-		state = "findingPath";
+		state = "deadEnd";
 		Hashtable processed = new Hashtable();
 		List<Vector2Int> path = new List<Vector2Int>();
 		int time = 0;
@@ -77,18 +86,21 @@ public class tilePathFinder : MonoBehaviour {
 		start -= new Vector2Int(1, 1);
 		if (FindPathSub(start, target, processed, new Hashtable(), path, start, ref time, ref state, ref count)) {
 			state = "foundPath";
+			findTime = stopwatch.ElapsedMilliseconds;
 			return path;
 		}
+		findTime = stopwatch.ElapsedMilliseconds;
 		return null;
     }
     private bool FindPathSub(Vector2Int currentPosition2, Vector2Int target2, Hashtable processed, Hashtable newProcessed, List<Vector2Int> path, Vector2Int startPosition2, ref int time, ref string currentState, ref int count) {
 		float distanceTravelledAway = Vector2Int.Distance(currentPosition2, target2) - Vector2Int.Distance(startPosition2, target2);
 		Vector3Int currentPosition3 = tilemap.WorldToCell(new Vector3(currentPosition2.x, currentPosition2.y));
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target2.x, target2.y));
+		bool isFirst = processed.Count == 0;
 
 		string key = currentPosition2.x + "," + currentPosition2.y;
 		if (processed[key] != null && (int)processed[key] == 1) {
-			currentState = "deadEnd";
+			currentState = "deadEndProcessed";
 			return false;
 		}
 		processed[key] = 1;
@@ -110,6 +122,10 @@ public class tilePathFinder : MonoBehaviour {
 		}
 		if (count > maxTilesSearch) {
 			currentState = "reachedMaxProcessed";
+			return false;
+		}
+		if (! tilemapCollider.bounds.Contains(currentPosition3)) {
+			currentState = "deadEndOoB";
 			return false;
 		}
 
@@ -171,29 +187,29 @@ public class tilePathFinder : MonoBehaviour {
 		bool[] outputs = new bool[2];
 
 		bool processedJump = false;
+		bool[] alreadyTried = new bool[4];
 		float min;
 		int minIndex = -1;
-		List<Vector2Int> newPath;
 		// Shortest valid route in the short term
 		for (int i = 0; i < index; i++) { // This is less efficient than using a proper sorting algorithm, however, most of the time it won't need to be fully sorted
 			if (i == jumpIndex) processedJump = true;
 			min = Mathf.Infinity;
 			minIndex = -1;
-			for (int c = i; c < index; c++) {
-				float distance = Vector2Int.Distance(target2, directions[c]);
-				if (distance < min) {
+			for (int c = 0; c < index; c++) {
+				float distance = Mathf.Abs(Vector2Int.Distance(target2, directions[c]));
+				if (distance <= min && (! alreadyTried[c])) {
 					min = distance;
 					minIndex = c;
 				}
 			}
+			alreadyTried[minIndex] = true;
 
-			newPath = new List<Vector2Int>();
+			newPaths[0] = new List<Vector2Int>();
 			newProcessedDeluxe[0] = new Hashtable();
 			int directionType = directionTypes[minIndex];
 			newTimes[0] = actionTimes[directionType];
 
-			outputs[0] = FindPathSub(directions[minIndex], target2, processed, newProcessedDeluxe[0], newPath, startPosition2, ref newTimes[0], ref currentState, ref count);
-			newPaths[0] = newPath;
+			outputs[0] = FindPathSub(directions[minIndex], target2, processed, newProcessedDeluxe[0], newPaths[0], startPosition2, ref newTimes[0], ref currentState, ref count);
 
 			if (outputs[0] && (jumpIndex == -1 || processedJump)) {
 				foreach (Vector2Int item in newPaths[0]) {
@@ -207,20 +223,14 @@ public class tilePathFinder : MonoBehaviour {
 			if (outputs[0]) {
 				break;
             }
-			if (i + 1 == index) {
-				currentState = "deadEnd";
-				return false;
-            }
+			if (i + 1 == index) return false;
 		}
-		if (processedJump) {
-			currentState = "deadEnd";
-			return false;
-		}
+		if (processedJump) return false;
 
 		// Possibly shorter overall, jumping can require getting further away initially
 		if (newProcessed.Count <= maxTilesSearch) {
 			if (jumpIndex != -1 && minIndex != jumpIndex) {
-				newPath = new List<Vector2Int>();
+				newPaths[1] = new List<Vector2Int>();
 				newProcessedDeluxe[1] = new Hashtable();
 				newTimes[1] = actionTimes[2];
 
@@ -228,11 +238,10 @@ public class tilePathFinder : MonoBehaviour {
 				foreach (DictionaryEntry item in newProcessed) {
 					alreadyProcessed[item.Key] = 1;
 				}
-				outputs[1] = FindPathSub(directions[jumpIndex], target2, alreadyProcessed, newProcessedDeluxe[1], newPath, startPosition2, ref newTimes[1], ref currentState, ref count);
+				outputs[1] = FindPathSub(directions[jumpIndex], target2, alreadyProcessed, newProcessedDeluxe[1], newPaths[1], startPosition2, ref newTimes[1], ref currentState, ref count);
 				foreach (DictionaryEntry item in newProcessedDeluxe[1]) {
 					processed[item.Key] = 0;
 				}
-				newPaths[1] = newPath;
 				pathCount++;
 			}
 		}
@@ -246,10 +255,7 @@ public class tilePathFinder : MonoBehaviour {
 				minIndex = i;
 			}
 		}
-		if (minIndex == -1) {
-			currentState = "deadEnd";
-			return false;
-		}
+		if (minIndex == -1) return false;
 
 		foreach (Vector2Int item in newPaths[minIndex]) {
 			path.Add(item);

@@ -811,16 +811,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff7415da55b78514cb00fa297349b4a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  setTarget: {x: -12, y: 10}
+  setTarget: {x: -8, y: 15}
   tilesObject: {fileID: 476789936}
   maxSearchDistance: 50
   maxAwaySearchDistance: 7
-  maxTilesSearch: 100
+  maxTilesSearch: 50
   maxJumpHeight: 5
   passableTiles: []
   actionTimes: 02000000020000000400000001000000
-  state: 
   pathSquare: {fileID: 6121473263323852447, guid: 5115e527a61dd9a48bcab1310a3fcce2, type: 3}
+  state: 
+  findTime: 0
 --- !u!1 &476789936
 GameObject:
   m_ObjectHideFlags: 0
@@ -3909,6 +3910,16 @@ Tilemap:
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 1073741825
+  - first: {x: -9, y: 4, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 18
+      m_TileSpriteIndex: 18
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 65535
+      dummyAlignment: 0
+      m_AllTileFlags: 1073741825
   - first: {x: -8, y: 4, z: 0}
     second:
       serializedVersion: 2
@@ -4327,7 +4338,7 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: 788366b07bb604c59aa9014b50baabd0, type: 2}
   - m_RefCount: 12
     m_Data: {fileID: 11400000, guid: e4fa165e94bcc4d77a65332b8a360dd8, type: 2}
-  - m_RefCount: 30
+  - m_RefCount: 31
     m_Data: {fileID: 11400000, guid: a1d070e7c7684419281f22cb31671844, type: 2}
   m_TileSpriteArray:
   - m_RefCount: 15
@@ -4366,10 +4377,10 @@ Tilemap:
     m_Data: {fileID: -7902727485049719686, guid: 0ef58cd216c194faabe616bf66f8effb, type: 3}
   - m_RefCount: 12
     m_Data: {fileID: -809894152159824698, guid: 0ef58cd216c194faabe616bf66f8effb, type: 3}
-  - m_RefCount: 30
+  - m_RefCount: 31
     m_Data: {fileID: -1464467535388251667, guid: 0ef58cd216c194faabe616bf66f8effb, type: 3}
   m_TileMatrixArray:
-  - m_RefCount: 336
+  - m_RefCount: 337
     m_Data:
       e00: 1
       e01: 0
@@ -4388,7 +4399,7 @@ Tilemap:
       e32: 0
       e33: 1
   m_TileColorArray:
-  - m_RefCount: 336
+  - m_RefCount: 337
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -4612,6 +4623,18 @@ CompositeCollider2D:
       - X: -80002776
         Y: 70002776
       - X: -80002776
+        Y: 50002880
+      - X: -90002817
+        Y: 50002880
+      - X: -90002876
+        Y: 50002821
+      - X: -90002876
+        Y: 39997179
+      - X: -90002817
+        Y: 39997120
+      - X: -80002776
+        Y: 39997120
+      - X: -80002776
         Y: 9997221
       - X: -69997224
         Y: 9997221
@@ -4668,15 +4691,19 @@ CompositeCollider2D:
     - - {x: -6.999752, y: 0.9997221}
       - {x: -6.999752, y: 7.0002775}
       - {x: -8.0002775, y: 7.000248}
+      - {x: -8.000307, y: 5.000288}
+      - {x: -9.000288, y: 5.0002527}
+      - {x: -9.000253, y: 3.999712}
+      - {x: -8.0002775, y: 3.9996824}
       - {x: -8.000248, y: 0.9997221}
-    - - {x: -0.9997513, y: 3.999722}
-      - {x: -0.9997513, y: 7.0002775}
-      - {x: -2.000278, y: 7.000248}
-      - {x: -2.000249, y: 3.999722}
     - - {x: -2.9997513, y: 4.999722}
       - {x: -2.9997513, y: 7.0002775}
       - {x: -4.000278, y: 7.000248}
       - {x: -4.000249, y: 4.999722}
+    - - {x: -0.9997513, y: 3.999722}
+      - {x: -0.9997513, y: 7.0002775}
+      - {x: -2.000278, y: 7.000248}
+      - {x: -2.000249, y: 3.999722}
   m_VertexDistance: 0.0005
   m_OffsetDistance: 0.00005
 --- !u!1001 &533507790
