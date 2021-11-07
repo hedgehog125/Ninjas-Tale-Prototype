@@ -37,7 +37,7 @@ public class tilePathFinder : MonoBehaviour {
 
     void FixedUpdate() {
 		if (activePath != null && activePath.Count != 0) {
-			if (pathDelay == 10) {
+			if (pathDelay == 20) {
 				pathDelay = 0;
 				pathIndex++;
 				if (pathIndex == activePath.Count) {
@@ -74,21 +74,24 @@ public class tilePathFinder : MonoBehaviour {
 		Instantiate(pathSquare, new Vector3(target.x + 0.5f, target.y + 0.5f), Quaternion.identity);
 
 		int count = 0;
-		if (FindPathSub(start - new Vector2Int(1, 1), target, processed, new Hashtable(), path, 0.0f, ref time, ref state, ref count)) {
+		start -= new Vector2Int(1, 1);
+		if (FindPathSub(start, target, processed, new Hashtable(), path, start, ref time, ref state, ref count)) {
 			state = "foundPath";
 			return path;
 		}
 		return null;
     }
-    private bool FindPathSub(Vector2Int currentPosition2, Vector2Int target2, Hashtable oldProcessed, Hashtable newProcessed, List<Vector2Int> path, float distanceTravelledAway, ref int time, ref string state, ref int count) {
+    private bool FindPathSub(Vector2Int currentPosition2, Vector2Int target2, Hashtable processed, Hashtable newProcessed, List<Vector2Int> path, Vector2Int startPosition2, ref int time, ref string currentState, ref int count) {
+		float distanceTravelledAway = Vector2Int.Distance(currentPosition2, target2) - Vector2Int.Distance(startPosition2, target2);
 		Vector3Int currentPosition3 = tilemap.WorldToCell(new Vector3(currentPosition2.x, currentPosition2.y));
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target2.x, target2.y));
 
 		string key = currentPosition2.x + "," + currentPosition2.y;
-		if (oldProcessed[key] != null) {
-			state = "deadEnd";
+		if (processed[key] != null && (int)processed[key] == 1) {
+			currentState = "deadEnd";
 			return false;
-		};
+		}
+		processed[key] = 1;
 		newProcessed[key] = 1;
 		count++;
 
@@ -98,15 +101,15 @@ public class tilePathFinder : MonoBehaviour {
 		square.transform.Rotate(new Vector3(0, 0, -((count * 20) % 90)));
 
 		if (Vector3Int.Distance(currentPosition3, target3) > maxSearchDistance) {
-			state = "reachedMaxSearch";
+			currentState = "reachedMaxSearch";
 			return false;
 		}
 		if (distanceTravelledAway > maxAwaySearchDistance) {
-			state = "reachedMaxTravelledAway";
+			currentState = "reachedMaxTravelledAway";
 			return false;
 		}
 		if (count > maxTilesSearch) {
-			state = "reachedMaxProcessed";
+			currentState = "reachedMaxProcessed";
 			return false;
 		}
 
@@ -156,7 +159,7 @@ public class tilePathFinder : MonoBehaviour {
 		}
 
 		if (index == 0) {
-			state = "deadEnd";
+			currentState = "deadEnd";
 			return false;
 		}
 
@@ -167,11 +170,13 @@ public class tilePathFinder : MonoBehaviour {
 		int pathCount = 1;
 		bool[] outputs = new bool[2];
 
+		bool processedJump = false;
 		float min;
 		int minIndex = -1;
 		List<Vector2Int> newPath;
 		// Shortest valid route in the short term
 		for (int i = 0; i < index; i++) { // This is less efficient than using a proper sorting algorithm, however, most of the time it won't need to be fully sorted
+			if (i == jumpIndex) processedJump = true;
 			min = Mathf.Infinity;
 			minIndex = -1;
 			for (int c = i; c < index; c++) {
@@ -187,19 +192,29 @@ public class tilePathFinder : MonoBehaviour {
 			int directionType = directionTypes[minIndex];
 			newTimes[0] = actionTimes[directionType];
 
-			Hashtable alreadyProcessed = new Hashtable(oldProcessed);
-			foreach (DictionaryEntry item in newProcessed) {
-				alreadyProcessed[item.Key] = 1;
-            }
-			outputs[0] = FindPathSub(directions[minIndex], target2, alreadyProcessed, newProcessedDeluxe[0], newPath, GetDistanceTravelledAway(distanceTravelledAway, currentPosition2, target2, directions[minIndex]), ref newTimes[0], ref state, ref count);
+			outputs[0] = FindPathSub(directions[minIndex], target2, processed, newProcessedDeluxe[0], newPath, startPosition2, ref newTimes[0], ref currentState, ref count);
 			newPaths[0] = newPath;
+
+			if (outputs[0] && (jumpIndex == -1 || processedJump)) {
+				foreach (Vector2Int item in newPaths[0]) {
+					path.Add(item);
+				}
+				return true;
+			}
+			foreach (DictionaryEntry item in newProcessedDeluxe[0]) {
+				processed[item.Key] = 0;
+			}
 			if (outputs[0]) {
 				break;
             }
 			if (i + 1 == index) {
-				state = "deadEnd";
+				currentState = "deadEnd";
 				return false;
             }
+		}
+		if (processedJump) {
+			currentState = "deadEnd";
+			return false;
 		}
 
 		// Possibly shorter overall, jumping can require getting further away initially
@@ -209,11 +224,14 @@ public class tilePathFinder : MonoBehaviour {
 				newProcessedDeluxe[1] = new Hashtable();
 				newTimes[1] = actionTimes[2];
 
-				Hashtable alreadyProcessed = new Hashtable(oldProcessed);
+				Hashtable alreadyProcessed = new Hashtable(processed);
 				foreach (DictionaryEntry item in newProcessed) {
 					alreadyProcessed[item.Key] = 1;
 				}
-				outputs[1] = FindPathSub(directions[jumpIndex], target2, alreadyProcessed, newProcessedDeluxe[1], newPath, GetDistanceTravelledAway(distanceTravelledAway, currentPosition2, target2, directions[jumpIndex]), ref newTimes[1], ref state, ref count);
+				outputs[1] = FindPathSub(directions[jumpIndex], target2, alreadyProcessed, newProcessedDeluxe[1], newPath, startPosition2, ref newTimes[1], ref currentState, ref count);
+				foreach (DictionaryEntry item in newProcessedDeluxe[1]) {
+					processed[item.Key] = 0;
+				}
 				newPaths[1] = newPath;
 				pathCount++;
 			}
@@ -229,7 +247,7 @@ public class tilePathFinder : MonoBehaviour {
 			}
 		}
 		if (minIndex == -1) {
-			state = "deadEnd";
+			currentState = "deadEnd";
 			return false;
 		}
 
@@ -237,19 +255,10 @@ public class tilePathFinder : MonoBehaviour {
 			path.Add(item);
 		}
 		foreach (DictionaryEntry item in newProcessedDeluxe[minIndex]) {
-			newProcessed[item.Key] = 1;
+			processed[item.Key] = 1;
 		}
 		time += newTimes[minIndex];
 		return true;
-	}
-	private float GetDistanceTravelledAway(float original, Vector2Int currentPosition2, Vector2Int target2, Vector2Int newPoint) {
-		return original - Vector2Int.Distance(
-			newPoint, target2
-		).CompareTo(
-			Vector2Int.Distance(
-				currentPosition2, target2
-			)
-		);
 	}
 
     private string GetTileName(Vector3Int tileCoord) {
