@@ -101,8 +101,8 @@ public class tilePathFinder : MonoBehaviour {
 		float distanceTravelledAway = Vector2Int.Distance(currentPosition2, target2) - Vector2Int.Distance(startPosition2, target2);
 		Vector3Int currentPosition3 = tilemap.WorldToCell(new Vector3(currentPosition2.x, currentPosition2.y));
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target2.x, target2.y));
-
 		string key = currentPosition2.x + "," + currentPosition2.y;
+
 		if (processed[key] != null && (int)processed[key] == 1) {
 			currentState = "deadEndProcessed";
 			return false;
@@ -216,9 +216,12 @@ public class tilePathFinder : MonoBehaviour {
 				}
 				return true;
 			}
+
 			foreach (DictionaryEntry item in newProcessedDeluxe[0]) {
 				processed[item.Key] = 0;
 			}
+
+
 			if (outputs[0]) {
 				break;
             }
@@ -238,9 +241,14 @@ public class tilePathFinder : MonoBehaviour {
 					alreadyProcessed[item.Key] = 1;
 				}
 				outputs[1] = FindPathSub(directions[jumpIndex], target2, alreadyProcessed, newProcessedDeluxe[1], newPaths[1], startPosition2, ref newTimes[1], ref currentState, ref count);
+
+				performance.Stopwatch test = new performance.Stopwatch();
+				test.Start();
+				Debug.Log((float)(test.ElapsedTicks * 1000) / performance.Stopwatch.Frequency);
 				foreach (DictionaryEntry item in newProcessedDeluxe[1]) {
 					processed[item.Key] = 0;
 				}
+
 				pathCount++;
 			}
 		}
