@@ -16,7 +16,6 @@ public class tilePathFinder : MonoBehaviour {
 	public int maxJumpHeight;
 	public List<string> passableTiles;
 	public List<int> actionTimes;
-	public GameObject pathSquare;
 
 	public string state;
 	public float findTime;
@@ -68,22 +67,28 @@ public class tilePathFinder : MonoBehaviour {
 		performance.Stopwatch stopwatch = new performance.Stopwatch();
 		stopwatch.Start();
 
+		start -= new Vector2Int(1, 1);
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target.x, target.y));
 		if (! isPassable(GetTileName(target3))) {
 			state = "nonPassableTarget";
 			findTime = stopwatch.ElapsedMilliseconds;
 			return null;
         }
+		List<Vector2Int> path = new List<Vector2Int>();
+		if (
+			start.x == target.x
+			&& start.y == target.y
+		) {
+			state = "foundPath";
+			findTime = stopwatch.ElapsedMilliseconds;
+			path.Add(start);
+			return path;
+		}
 
 		state = "deadEnd";
 		Hashtable processed = new Hashtable();
-		List<Vector2Int> path = new List<Vector2Int>();
 		int time = 0;
-
-		Instantiate(pathSquare, new Vector3(target.x + 0.5f, target.y + 0.5f), Quaternion.identity);
-
 		int count = 0;
-		start -= new Vector2Int(1, 1);
 		if (FindPathSub(start, target, processed, new Hashtable(), path, start, ref time, ref state, ref count)) {
 			state = "foundPath";
 			findTime = stopwatch.ElapsedMilliseconds;
@@ -96,7 +101,6 @@ public class tilePathFinder : MonoBehaviour {
 		float distanceTravelledAway = Vector2Int.Distance(currentPosition2, target2) - Vector2Int.Distance(startPosition2, target2);
 		Vector3Int currentPosition3 = tilemap.WorldToCell(new Vector3(currentPosition2.x, currentPosition2.y));
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target2.x, target2.y));
-		bool isFirst = processed.Count == 0;
 
 		string key = currentPosition2.x + "," + currentPosition2.y;
 		if (processed[key] != null && (int)processed[key] == 1) {
@@ -106,11 +110,6 @@ public class tilePathFinder : MonoBehaviour {
 		processed[key] = 1;
 		newProcessed[key] = 1;
 		count++;
-
-		GameObject square = Instantiate(pathSquare, new Vector3(currentPosition2.x + 0.5f, currentPosition2.y + 0.5f), Quaternion.identity);
-		float size = Mathf.Min((count / 150.0f) + 0.1f, 1);
-		square.transform.localScale = new Vector3(size, size, 1);
-		square.transform.Rotate(new Vector3(0, 0, -((count * 20) % 90)));
 
 		if (Vector3Int.Distance(currentPosition3, target3) > maxSearchDistance) {
 			currentState = "reachedMaxSearch";
