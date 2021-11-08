@@ -27,7 +27,8 @@ public class tilePathFinder : MonoBehaviour {
 	public int processCount;
 
 	private Hashtable passableTilesIndex = new Hashtable();
-	private List<Vector2Int> activePath;
+	private Vector2Int[] activePath;
+	private int pathLength;
     private Tilemap tilemap;
 	private CompositeCollider2D tilemapCollider;
 	private Rigidbody2D rb;
@@ -46,11 +47,11 @@ public class tilePathFinder : MonoBehaviour {
     }
 
     void FixedUpdate() {
-		if (activePath != null && activePath.Count != 0) {
+		if (activePath != null && pathLength != 0) {
 			if (pathDelay == 20) {
 				pathDelay = 0;
 				pathIndex++;
-				if (pathIndex == activePath.Count) {
+				if (pathIndex == pathLength) {
 					pathIndex = 0;
 				}
 				transform.position = activePath[pathIndex] + new Vector2(0.5f, 0.5f);
@@ -65,30 +66,32 @@ public class tilePathFinder : MonoBehaviour {
 		
 	}
 
-	private List<Vector2Int> FindPath(Vector3 start, Vector2 target) {
+	private Vector2Int[] FindPath(Vector3 start, Vector2 target) {
 		return FindPath(new Vector2Int((int)start.x, (int)start.y), new Vector2Int((int)target.x, (int)target.y));
 	}
 
-	private List<Vector2Int> FindPath(Vector2Int start, Vector2Int target) {
+	private Vector2Int[] FindPath(Vector2Int start, Vector2Int target) {
 		performance.Stopwatch stopwatch = new performance.Stopwatch();
 		stopwatch.Start();
 
 		processCount = 0;
 		start -= new Vector2Int(1, 1);
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target.x, target.y));
+
 		if (! isPassable(GetTileName(target3))) {
 			state = "nonPassableTarget";
 			findTime = (float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency;
 			return null;
         }
-		List<Vector2Int> path = new List<Vector2Int>();
+
 		if (
 			start.x == target.x
 			&& start.y == target.y
 		) {
 			state = "foundPath";
 			findTime = (float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency;
-			path.Add(start);
+			Vector2Int[] path = new Vector2Int[1];
+			path[0] = start;
 			return path;
 		}
 
@@ -97,10 +100,14 @@ public class tilePathFinder : MonoBehaviour {
 		List<string> stringPath = new List<string>();
 
 		int time = 0;
+		Debug.Log((float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency);
+
 		if (FindPathSub(start, target, processed, null, stringPath, start, ref time, ref state)) {
-			foreach (string item in stringPath) {
-				string[] stringNumbers = item.Split(',');
-				path.Add(new Vector2Int(int.Parse(stringNumbers[0]), int.Parse(stringNumbers[1])));
+			// 3.5117ms vs 3.3244
+			Vector2Int[] path = new Vector2Int[stringPath.Count];
+			for (int i = 0; i < stringPath.Count; i++) {
+				string[] stringNumbers = stringPath[i].Split(',');
+				path[i] = new Vector2Int(int.Parse(stringNumbers[0]), int.Parse(stringNumbers[1]));
 			}
 
 			state = "foundPath";
