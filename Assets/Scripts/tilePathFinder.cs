@@ -24,6 +24,7 @@ public class tilePathFinder : MonoBehaviour {
 
 	public string state;
 	public float findTime;
+	public int processCount;
 
 	private Hashtable passableTilesIndex = new Hashtable();
 	private List<Vector2Int> activePath;
@@ -72,6 +73,7 @@ public class tilePathFinder : MonoBehaviour {
 		performance.Stopwatch stopwatch = new performance.Stopwatch();
 		stopwatch.Start();
 
+		processCount = 0;
 		start -= new Vector2Int(1, 1);
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target.x, target.y));
 		if (! isPassable(GetTileName(target3))) {
@@ -95,8 +97,7 @@ public class tilePathFinder : MonoBehaviour {
 		List<string> stringPath = new List<string>();
 
 		int time = 0;
-		int count = 0;
-		if (FindPathSub(start, target, processed, null, stringPath, start, ref time, ref state, ref count)) {
+		if (FindPathSub(start, target, processed, null, stringPath, start, ref time, ref state)) {
 			foreach (string item in stringPath) {
 				string[] stringNumbers = item.Split(',');
 				path.Add(new Vector2Int(int.Parse(stringNumbers[0]), int.Parse(stringNumbers[1])));
@@ -109,7 +110,7 @@ public class tilePathFinder : MonoBehaviour {
 		findTime = (float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency;
 		return null;
     }
-    private bool FindPathSub(Vector2Int currentPosition2, Vector2Int target2, Hashtable processed, List<string> newProcessed, List<string> path, Vector2Int startPosition2, ref int time, ref string currentState, ref int count) {
+    private bool FindPathSub(Vector2Int currentPosition2, Vector2Int target2, Hashtable processed, List<string> newProcessed, List<string> path, Vector2Int startPosition2, ref int time, ref string currentState) {
 		float distanceTravelledAway = Vector2Int.Distance(currentPosition2, target2) - Vector2Int.Distance(startPosition2, target2);
 		Vector3Int currentPosition3 = tilemap.WorldToCell(new Vector3(currentPosition2.x, currentPosition2.y));
 		Vector3Int target3 = tilemap.WorldToCell(new Vector3(target2.x, target2.y));
@@ -123,7 +124,7 @@ public class tilePathFinder : MonoBehaviour {
 		if (newProcessed != null) {
 			newProcessed.Add(key);
 		}
-		count++;
+		processCount++;
 
 		if (Vector3Int.Distance(currentPosition3, target3) > maxSearchDistance) {
 			currentState = "reachedMaxSearch";
@@ -133,11 +134,11 @@ public class tilePathFinder : MonoBehaviour {
 			currentState = "reachedMaxTravelledAway";
 			return false;
 		}
-		if (count > maxTilesSearch) {
+		if (processCount > maxTilesSearch) {
 			currentState = "reachedMaxProcessed";
 			return false;
 		}
-		if (!tilemapCollider.bounds.Contains(currentPosition3)) {
+		if (! tilemapCollider.bounds.Contains(currentPosition3)) {
 			currentState = "deadEndOoB";
 			return false;
 		}
@@ -228,7 +229,7 @@ public class tilePathFinder : MonoBehaviour {
 			newTimes[0] = actionTimes[directionType];
 
 			newProcessedDeluxe[0] = new List<string>();
-			outputs[0] = FindPathSub(directions[minIndex], target2, processed, newProcessedDeluxe[0], newPaths[0], startPosition2, ref newTimes[0], ref currentState, ref count);
+			outputs[0] = FindPathSub(directions[minIndex], target2, processed, newProcessedDeluxe[0], newPaths[0], startPosition2, ref newTimes[0], ref currentState);
 
 			if (outputs[0] && (jumpIndex == -1 || processedJump)) {
 				foreach (string item in newPaths[0]) {
@@ -256,7 +257,7 @@ public class tilePathFinder : MonoBehaviour {
 				newTimes[1] = actionTimes[2];
 
 				newProcessedDeluxe[1] = new List<string>();
-				outputs[1] = FindPathSub(directions[jumpIndex], target2, processed, newProcessedDeluxe[1], newPaths[1], startPosition2, ref newTimes[1], ref currentState, ref count);
+				outputs[1] = FindPathSub(directions[jumpIndex], target2, processed, newProcessedDeluxe[1], newPaths[1], startPosition2, ref newTimes[1], ref currentState);
 
 				foreach (string item in newProcessedDeluxe[1]) {
 					processed[item] = 0;
