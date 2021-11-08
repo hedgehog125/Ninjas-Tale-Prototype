@@ -9,6 +9,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float maxWalkSpeed;
 	[SerializeField] private float moveDeadzone;
 	[SerializeField] private float neutralSpeedMaintenance;
+	[SerializeField] private float neutralAirSpeedMaintenance;
 	[SerializeField] private float turnSpeedMaintenance;
 
 
@@ -51,9 +52,9 @@ public class playerMovement : MonoBehaviour {
 	private bool ledgeGrabbing;
 	public float ledgeGrabX;
 	public float ledgeGrabY;
+	public bool ledgeGrabStage;
 
 	private float normalGravity;
-
 
 	// Modified by visual child
 	public bool direction = true;
@@ -92,21 +93,33 @@ public class playerMovement : MonoBehaviour {
 		if (raycastCenter.collider == null) return outputs;
 		float distance = Mathf.Max(raycastCenter.distance - 0.05f, 0);
 
-		ledgeGrabY = raycastCenter.collider.bounds.center + ;
+		Vector2 bounds = col.bounds.size;
+		bounds.y = 0.1f;
 		Vector2 coords = col.bounds.center;
-		coords.y += col.bounds.size.y / 2;
-		RaycastHit2D raycastTop = Physics2D.BoxCast(coords, col.bounds.size, 0, direction ? Vector2.right : Vector2.left, 0.1f, groundLayer);
-		if (raycastTop.collider == null) {
-			outputs[1] = true; // Can climb to here
-			ledgeGrabY = coords.y + (col.bounds.size.y / 2);
-		}
-		else { // What about slightly higher?
-			coords.y += col.bounds.size.y / 3;
-			raycastTop = Physics2D.BoxCast(coords, col.bounds.size, 0, direction ? Vector2.right : Vector2.left, 0.1f, groundLayer);
-			if (raycastTop.collider == null) {
-				outputs[1] = true;
-				ledgeGrabY = coords.y + (col.bounds.size.y / 2);
+		coords.x = Mathf.Round(coords.x) - (direction? -0.5f : 0.5f);
+
+
+		bool canLedgeGrab = false;
+		RaycastHit2D raycastTop = Physics2D.BoxCast(coords, bounds, 0, Vector2.up, 1.5f, groundLayer);
+		if (raycastTop.distance < 1.4f) {
+			coords.y += 1.9f;
+			raycastTop = Physics2D.BoxCast(coords, bounds, 0, Vector2.down, 3, groundLayer);
+			if (raycastTop.distance >= 1.5f) {
+				canLedgeGrab = true;
 			}
+			else {
+				coords.y--;
+				raycastTop = Physics2D.BoxCast(coords, bounds, 0, Vector2.down, 3, groundLayer);
+				if (raycastTop.distance >= 1.5f) {
+					canLedgeGrab = true;
+				}
+			}
+		}
+
+		if (canLedgeGrab) {
+			outputs[1] = true; // Can climb to here
+			ledgeGrabX = coords.x + (direction? -0.5f : 0.5f);
+			ledgeGrabY = coords.y - (raycastTop.distance - 1);
 		}
 
 		bool canSlide = true;
@@ -120,10 +133,8 @@ public class playerMovement : MonoBehaviour {
 			}
 		}
 
-		if (! canSlide) {
-			// To stop friction
+		if (! canSlide) { // To stop friction
 			distance = raycastCenter.distance;
-			return outputs;
 		}
 		transform.position = new Vector2(transform.position.x + (direction ? -distance : distance), transform.position.y);
 		if (! canSlide) return outputs;
@@ -146,9 +157,7 @@ public class playerMovement : MonoBehaviour {
 			hasJumped = false;
 			hasWallJumped = false;
 		}
-		if (isOnGround != wasOnGround) {
-			wasOnGround = isOnGround;
-        }
+		wasOnGround = isOnGround;
 
 		return isOnGround;
 	}
@@ -246,8 +255,11 @@ public class playerMovement : MonoBehaviour {
 				hasWallJumped = true;
 				wallJumpDirection = direction;
 				wallJumpHeight = transform.position.y;
+				jumpBufferTick = 0;
+
 				if (canLedgeGrab) {
 					ledgeGrabbing = true;
+					ledgeGrabStage = false;
 					rb.gravityScale = 0;
 				}
 				else {
@@ -263,29 +275,53 @@ public class playerMovement : MonoBehaviour {
 
 	private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
-		if (moveInputNeutralX) {
-			vel.x *= neutralSpeedMaintenance;
-		}
-		else if (direction != moveInput.x > 0) {
-			vel.x *= turnSpeedMaintenance;
-		}
 
 		bool isOnGround = GroundDetectTick();
 		bool[] outputs = DetectWallSlideTick();
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];
+		if (moveInputNeutralX) {
+			if (isOnGround) {
+				vel.x *= neutralSpeedMaintenance;
+			}
+			else {
+				vel.x *= neutralAirSpeedMaintenance;
+			}
+		}
+		else if (direction != moveInput.x > 0) {
+			vel.x *= turnSpeedMaintenance;
+		}		
 
 		if (ledgeGrabbing) {
 			if (transform.position.y > ledgeGrabY) {
-				vel.x = direction ? 0.5f : -0.5f;
+				ledgeGrabStage = true;
+				rb.gravityScale = normalGravity;
+			}
+			if (ledgeGrabStage) {
+				if (ledgeGrabY - transform.position.y >= 2) { // Fail-safe
+					ledgeGrabbing = false;
+				}
+				vel.x = direction? 0.5f : -0.5f;
+				if (direction) {
+					if (transform.position.x > ledgeGrabX) {
+						ledgeGrabbing = false;
+					}
+				}
+				else {
+					if (transform.position.x < ledgeGrabX) {
+						ledgeGrabbing = false;
+					}
+				}
 			}
 			else {
-				vel.y += 0.2f;
+				vel.y = Mathf.Min(vel.y + 0.2f, 2);
 			}
 		}
 		else {
 			MoveTick(ref vel, isOnGround, ref isOnWall);
-			JumpTick(ref vel, isOnGround);
+			if (! isOnWall) {
+				JumpTick(ref vel, isOnGround);
+			}
 			WallTick(ref vel, isOnGround, isOnWall, canLedgeGrab);
         }
 
