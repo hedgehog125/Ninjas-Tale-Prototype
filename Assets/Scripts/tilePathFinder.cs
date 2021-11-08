@@ -22,6 +22,7 @@ public class tilePathFinder : MonoBehaviour {
 	public int maxJumpHeight;
 	public List<string> passableTiles;
 	public List<int> actionTimes;
+	public GameObject player;
 
 	public string state;
 	public float findTime;
