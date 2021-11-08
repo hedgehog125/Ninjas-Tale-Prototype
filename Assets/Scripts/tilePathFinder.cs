@@ -3,6 +3,7 @@ using performance = System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using UnityEngine.Tilemaps;
 
 /*
@@ -35,7 +36,7 @@ public class tilePathFinder : MonoBehaviour {
 	private int pathIndex;
 	private int pathDelay;
 
-    void Awake() {
+	void Awake() {
         rb = GetComponent<Rigidbody2D>();
     }
     void Start()  {
@@ -44,9 +45,9 @@ public class tilePathFinder : MonoBehaviour {
 
 		IndexPassables();
 		activePath = FindPath(transform.position, setTarget);
-    }
+	}
 
-    void FixedUpdate() {
+	void FixedUpdate() {
 		if (activePath != null && pathLength != 0) {
 			if (pathDelay == 20) {
 				pathDelay = 0;
@@ -92,6 +93,7 @@ public class tilePathFinder : MonoBehaviour {
 			findTime = (float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency;
 			Vector2Int[] path = new Vector2Int[1];
 			path[0] = start;
+			pathLength = 1;
 			return path;
 		}
 
@@ -100,11 +102,9 @@ public class tilePathFinder : MonoBehaviour {
 		List<string> stringPath = new List<string>();
 
 		int time = 0;
-		Debug.Log((float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency);
-
 		if (FindPathSub(start, target, processed, null, stringPath, start, ref time, ref state)) {
-			// 3.5117ms vs 3.3244
-			Vector2Int[] path = new Vector2Int[stringPath.Count];
+			pathLength = stringPath.Count;
+			Vector2Int[] path = new Vector2Int[pathLength];
 			for (int i = 0; i < stringPath.Count; i++) {
 				string[] stringNumbers = stringPath[i].Split(',');
 				path[i] = new Vector2Int(int.Parse(stringNumbers[0]), int.Parse(stringNumbers[1]));
@@ -115,6 +115,7 @@ public class tilePathFinder : MonoBehaviour {
 			return path;
 		}
 		findTime = (float)(stopwatch.ElapsedTicks * 1000) / performance.Stopwatch.Frequency;
+		pathLength = 0;
 		return null;
     }
     private bool FindPathSub(Vector2Int currentPosition2, Vector2Int target2, Hashtable processed, List<string> newProcessed, List<string> path, Vector2Int startPosition2, ref int time, ref string currentState) {
@@ -238,7 +239,7 @@ public class tilePathFinder : MonoBehaviour {
 			newProcessedDeluxe[0] = new List<string>();
 			outputs[0] = FindPathSub(directions[minIndex], target2, processed, newProcessedDeluxe[0], newPaths[0], startPosition2, ref newTimes[0], ref currentState);
 
-			if (outputs[0] && (jumpIndex == -1 || processedJump)) {
+			if (outputs[0] && (jumpIndex == -1 || processedJump || newTimes[0] <= actionTimes[2])) { // Don't try jumping if this route gets there in less time than it takes to jump
 				foreach (string item in newPaths[0]) {
 					path.Add(item);
 				}
@@ -327,3 +328,27 @@ public class tilePathFinder : MonoBehaviour {
 		return canMove;
 	}
 }
+
+
+/*
+[CustomEditor(typeof(DraggablePoint), true)]
+public class DraggablePoint : Editor {
+	readonly GUIStyle style = new GUIStyle();
+
+	void OnEnable() {
+		style.fontStyle = FontStyle.Bold;
+		style.normal.textColor = Color.white;
+	}
+
+	public void OnSceneGUI() {
+
+		if (tilemap != null) {
+			Vector3Int target3 = tilemap.WorldToCell(new Vector3(target.x, target.y));
+
+			Handles.Label(target3, "Target");
+			property.vector3Value = Handles.PositionHandle(property.vector3Value, Quaternion.identity);
+			serializedObject.ApplyModifiedProperties();
+        }
+	}
+}
+*/
