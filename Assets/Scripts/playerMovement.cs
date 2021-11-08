@@ -5,6 +5,8 @@ using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
 	[SerializeField] private LayerMask groundLayer;
+	[SerializeField] private GameObject tilesObject;
+
 	[SerializeField] private float walkAcceleration;
 	[SerializeField] private float maxWalkSpeed;
 	[SerializeField] private float moveDeadzone;
@@ -35,6 +37,8 @@ public class playerMovement : MonoBehaviour {
 
 	private Rigidbody2D rb;
 	private Collider2D col;
+	private BoxCollider2D boxCol;
+	private Collider2D tilesCollider;
 
 	private int coyoteTick;
 	private int jumpHoldTick;
@@ -79,6 +83,8 @@ public class playerMovement : MonoBehaviour {
 	private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<Collider2D>();
+		boxCol = GetComponent<BoxCollider2D>();
+		tilesCollider = tilesObject.GetComponent<Collider2D>();
 
 		normalGravity = rb.gravityScale;
 	}
@@ -87,40 +93,35 @@ public class playerMovement : MonoBehaviour {
 		return obCollider != null;
     }
 	private bool[] DetectWallSlideTick() {
+		Bounds bounds = boxCol.bounds;
+		Vector2 centerWas = bounds.center;
+		Vector2 sizeWas = boxCol.size;
+
+
 		bool[] outputs = new bool[2];
 		if (rb.velocity.y > 0) return outputs;
-		RaycastHit2D raycastCenter = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
+		RaycastHit2D raycastCenter = Physics2D.BoxCast(bounds.center, bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
 		float distance = Mathf.Max(raycastCenter.distance - 0.05f, 0);
 
-		Vector2 bounds = col.bounds.size;
-		bounds.y = 0.1f;
-		Vector2 coords = col.bounds.center;
-		coords.x = Mathf.Round(coords.x) - (direction? -0.5f : 0.5f);
+ 		bounds.center = new Vector2(Mathf.Round(bounds.center.x) + (direction? 0.5f : -0.5f), Mathf.Ceil(bounds.center.y) + 1.5f);
+		boxCol.size = new Vector2(boxCol.size.x, 0.1f);
 
+ 		if (! col.IsTouchingLayers(groundLayer)) {
+			RaycastHit2D raycastTop = Physics2D.BoxCast(bounds.center, bounds.size, 0, Vector2.up, 3, groundLayer);
+			float space = raycastTop.distance;
 
-		bool canLedgeGrab = false;
-		RaycastHit2D raycastTop = Physics2D.BoxCast(coords, bounds, 0, Vector2.up, 1.5f, groundLayer);
-		if (raycastTop.distance < 1.4f) {
-			coords.y += 1.9f;
-			raycastTop = Physics2D.BoxCast(coords, bounds, 0, Vector2.down, 3, groundLayer);
-			if (raycastTop.distance >= 1.5f) {
-				canLedgeGrab = true;
-			}
-			else {
-				coords.y--;
-				raycastTop = Physics2D.BoxCast(coords, bounds, 0, Vector2.down, 3, groundLayer);
-				if (raycastTop.distance >= 1.5f) {
-					canLedgeGrab = true;
-				}
+			raycastTop = Physics2D.BoxCast(bounds.center, bounds.size, 0, Vector2.down, 3, groundLayer);
+			space += raycastTop.distance;
+
+			if (space >= bounds.size.y) {
+				outputs[1] = true; // Can climb to here
+				ledgeGrabX = bounds.center.x + (direction ? -0.5f : 0.5f);
+				ledgeGrabY = bounds.center.y - (raycastTop.distance - 1);
 			}
 		}
-
-		if (canLedgeGrab) {
-			outputs[1] = true; // Can climb to here
-			ledgeGrabX = coords.x + (direction? -0.5f : 0.5f);
-			ledgeGrabY = coords.y - (raycastTop.distance - 1);
-		}
+		bounds.center = centerWas;
+		boxCol.size = sizeWas;
 
 		bool canSlide = true;
 		if (! wasOnWall) {
