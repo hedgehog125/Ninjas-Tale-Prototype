@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
 	[SerializeField] private LayerMask groundLayer;
-	[SerializeField] private GameObject tilesObject;
+	[SerializeField] private GameObject ledgeGrabTester;
 
 	[SerializeField] private float walkAcceleration;
 	[SerializeField] private float maxWalkSpeed;
@@ -37,8 +37,7 @@ public class playerMovement : MonoBehaviour {
 
 	private Rigidbody2D rb;
 	private Collider2D col;
-	private BoxCollider2D boxCol;
-	private Collider2D tilesCollider;
+	private BoxCollider2D ledgeCol;
 
 	private int coyoteTick;
 	private int jumpHoldTick;
@@ -83,47 +82,45 @@ public class playerMovement : MonoBehaviour {
 	private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<Collider2D>();
-		boxCol = GetComponent<BoxCollider2D>();
-		tilesCollider = tilesObject.GetComponent<Collider2D>();
+		ledgeCol = ledgeGrabTester.GetComponent<BoxCollider2D>();
+		ledgeCol.size = new Vector2(col.bounds.size.x, 0.1f);
 
 		normalGravity = rb.gravityScale;
 	}
 	private bool DetectGrounded() {
-		Collider2D obCollider = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.down, 0.02f, groundLayer).collider;
+		Vector2 center = col.bounds.center;
+		center.y -= 0.02f;
+		Vector2 size = col.bounds.size;
+		size.x -= 0.05f;
+		size.y -= 0.02f;
+
+		Collider2D obCollider = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.02f, groundLayer).collider;
 		return obCollider != null;
     }
-	private bool[] DetectWallSlideTick() {
-		Vector2 offsetWas = boxCol.offset;
-		Vector2 sizeWas = boxCol.size;
+	private bool[] DetectWallSlideTick(bool isOnGround) {
+		Vector2 center = col.bounds.center;
+		Vector2 size = col.bounds.size;
 
 
 		bool[] outputs = new bool[2];
-		if (rb.velocity.y > 0) return outputs;
-		RaycastHit2D raycastCenter = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
+		if (rb.velocity.y > 0 || isOnGround) return outputs;
+		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
 		float distance = Mathf.Max(raycastCenter.distance - 0.05f, 0);
 
- 		boxCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.5f : -0.5f), Mathf.Ceil(col.bounds.center.y) + 1.5f) - new Vector2(col.bounds.center.x, col.bounds.center.y);
-		boxCol.size = new Vector2(boxCol.size.x, 0.1f);
-
-		Debug.Log(col.bounds.center);
-		Debug.Log(col.bounds.size);
-
-		if (! col.IsTouchingLayers(groundLayer)) {
-			RaycastHit2D raycastTop = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.up, 3, groundLayer);
+		if (! ledgeCol.IsTouchingLayers(groundLayer)) {
+			RaycastHit2D raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.up, 3, groundLayer);
 			float space = raycastTop.distance;
 
-			raycastTop = Physics2D.BoxCast(boxCol.bounds.center, boxCol.bounds.size, 0, Vector2.down, 3, groundLayer);
+			raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.down, 3, groundLayer);
 			space += raycastTop.distance;
 
-			if (space >= boxCol.bounds.size.y) {
+			if (space >= size.y) {
 				outputs[1] = true; // Can climb to here
-				ledgeGrabX = boxCol.bounds.center.x + (direction ? -0.5f : 0.5f);
-				ledgeGrabY = boxCol.bounds.center.y - (raycastTop.distance - 1);
+				ledgeGrabX = ledgeCol.bounds.center.x + (direction? -0.25f : 0.25f);
+				ledgeGrabY = ledgeCol.bounds.center.y - (raycastTop.distance - 1);
 			}
 		}
-		boxCol.offset = offsetWas;
-		boxCol.size = sizeWas;
 
 		bool canSlide = true;
 		if (! wasOnWall) {
@@ -276,11 +273,15 @@ public class playerMovement : MonoBehaviour {
 		}
     }
 
-	private void FixedUpdate() {
+    public void Update() {
+		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.25f : -0.25f), Mathf.Ceil(col.bounds.center.y) + 1.5f) - new Vector2(col.bounds.center.x, col.bounds.center.y);
+	}
+
+    private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 
 		bool isOnGround = GroundDetectTick();
-		bool[] outputs = DetectWallSlideTick();
+		bool[] outputs = DetectWallSlideTick(isOnGround);
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];
 		if (moveInputNeutralX) {
