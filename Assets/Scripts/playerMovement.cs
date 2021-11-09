@@ -27,6 +27,9 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float wallJumpPowerX;
 	[SerializeField] private float wallJumpPowerY;
 	[SerializeField] private int wallJumpPreventBackwardsTime;
+	[SerializeField] private float ledgeGrabDistance;
+	[SerializeField] private float ledgeGrabAcceleration;
+	[SerializeField] private float ledgeGrabMaxSpeed;
 
 
 	// Needs to be read by the visual child
@@ -101,7 +104,6 @@ public class playerMovement : MonoBehaviour {
 		Vector2 center = col.bounds.center;
 		Vector2 size = col.bounds.size;
 
-
 		bool[] outputs = new bool[2];
 		if (rb.velocity.y > 0 || isOnGround) return outputs;
 		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
@@ -110,15 +112,15 @@ public class playerMovement : MonoBehaviour {
 
 		if (! ledgeCol.IsTouchingLayers(groundLayer)) {
 			RaycastHit2D raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.up, 3, groundLayer);
-			float space = raycastTop.distance;
+ 			float space = raycastTop.collider == null ? 3 : raycastTop.distance;
 
 			raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.down, 3, groundLayer);
 			space += raycastTop.distance;
 
 			if (space >= size.y) {
 				outputs[1] = true; // Can climb to here
-				ledgeGrabX = ledgeCol.bounds.center.x + (direction? -0.25f : 0.25f);
-				ledgeGrabY = ledgeCol.bounds.center.y - (raycastTop.distance - 1);
+				ledgeGrabX = ledgeCol.bounds.center.x; //+ (direction? 0.5f : -0.5f);
+				ledgeGrabY = (ledgeCol.bounds.center.y - raycastTop.distance) + 0.2f + (col.bounds.size.y / 2);
 			}
 		}
 
@@ -261,6 +263,9 @@ public class playerMovement : MonoBehaviour {
 					ledgeGrabbing = true;
 					ledgeGrabStage = false;
 					rb.gravityScale = 0;
+
+					vel.x = 0;
+					vel.y = 0;
 				}
 				else {
 					vel.x = direction? -wallJumpPowerX : wallJumpPowerX;
@@ -274,7 +279,7 @@ public class playerMovement : MonoBehaviour {
     }
 
     public void Update() {
-		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.25f : -0.25f), Mathf.Ceil(col.bounds.center.y) + 1.5f) - new Vector2(col.bounds.center.x, col.bounds.center.y);
+		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.25f : -0.25f), col.bounds.center.y + ledgeGrabDistance) - new Vector2(col.bounds.center.x, col.bounds.center.y);
 	}
 
     private void FixedUpdate() {
@@ -284,17 +289,6 @@ public class playerMovement : MonoBehaviour {
 		bool[] outputs = DetectWallSlideTick(isOnGround);
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];
-		if (moveInputNeutralX) {
-			if (isOnGround) {
-				vel.x *= neutralSpeedMaintenance;
-			}
-			else {
-				vel.x *= neutralAirSpeedMaintenance;
-			}
-		}
-		else if (direction != moveInput.x > 0) {
-			vel.x *= turnSpeedMaintenance;
-		}		
 
 		if (ledgeGrabbing) {
 			if (transform.position.y > ledgeGrabY) {
@@ -305,8 +299,8 @@ public class playerMovement : MonoBehaviour {
 				if (ledgeGrabY - transform.position.y >= 2) { // Fail-safe
 					ledgeGrabbing = false;
 				}
-				vel.x = direction? 0.5f : -0.5f;
-				if (direction) {
+				vel.x = wallJumpDirection? Mathf.Min(vel.x + (ledgeGrabAcceleration / 2), ledgeGrabMaxSpeed / 2) : Mathf.Max(vel.x - (ledgeGrabAcceleration / 2), -(ledgeGrabMaxSpeed / 2));
+				if (wallJumpDirection) {
 					if (transform.position.x > ledgeGrabX) {
 						ledgeGrabbing = false;
 					}
@@ -318,10 +312,22 @@ public class playerMovement : MonoBehaviour {
 				}
 			}
 			else {
-				vel.y = Mathf.Min(vel.y + 0.2f, 2);
+				vel.y = Mathf.Min(vel.y + ledgeGrabAcceleration, ledgeGrabMaxSpeed);
 			}
 		}
 		else {
+			if (moveInputNeutralX) {
+				if (isOnGround) {
+					vel.x *= neutralSpeedMaintenance;
+				}
+				else {
+					vel.x *= neutralAirSpeedMaintenance;
+				}
+			}
+			else if (direction != moveInput.x > 0) {
+				vel.x *= turnSpeedMaintenance;
+			}
+
 			MoveTick(ref vel, isOnGround, ref isOnWall);
 			if (! isOnWall) {
 				JumpTick(ref vel, isOnGround);

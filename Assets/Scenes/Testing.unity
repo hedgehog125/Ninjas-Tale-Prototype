@@ -6490,6 +6490,9 @@ MonoBehaviour:
   wallJumpPowerX: 20
   wallJumpPowerY: 10
   wallJumpPreventBackwardsTime: 15
+  ledgeGrabDistance: 0.5
+  ledgeGrabAcceleration: 3
+  ledgeGrabMaxSpeed: 5
   moveInput: {x: 0, y: 0}
   moveInputNeutralX: 1
   moveInputNeutralY: 1
