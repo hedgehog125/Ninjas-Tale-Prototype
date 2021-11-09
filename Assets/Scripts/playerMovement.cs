@@ -93,34 +93,36 @@ public class playerMovement : MonoBehaviour {
 		return obCollider != null;
     }
 	private bool[] DetectWallSlideTick() {
-		Bounds bounds = boxCol.bounds;
-		Vector2 centerWas = bounds.center;
+		Vector2 offsetWas = boxCol.offset;
 		Vector2 sizeWas = boxCol.size;
 
 
 		bool[] outputs = new bool[2];
 		if (rb.velocity.y > 0) return outputs;
-		RaycastHit2D raycastCenter = Physics2D.BoxCast(bounds.center, bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
+		RaycastHit2D raycastCenter = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
 		float distance = Mathf.Max(raycastCenter.distance - 0.05f, 0);
 
- 		bounds.center = new Vector2(Mathf.Round(bounds.center.x) + (direction? 0.5f : -0.5f), Mathf.Ceil(bounds.center.y) + 1.5f);
+ 		boxCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.5f : -0.5f), Mathf.Ceil(col.bounds.center.y) + 1.5f) - new Vector2(col.bounds.center.x, col.bounds.center.y);
 		boxCol.size = new Vector2(boxCol.size.x, 0.1f);
 
- 		if (! col.IsTouchingLayers(groundLayer)) {
-			RaycastHit2D raycastTop = Physics2D.BoxCast(bounds.center, bounds.size, 0, Vector2.up, 3, groundLayer);
+		Debug.Log(col.bounds.center);
+		Debug.Log(col.bounds.size);
+
+		if (! col.IsTouchingLayers(groundLayer)) {
+			RaycastHit2D raycastTop = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.up, 3, groundLayer);
 			float space = raycastTop.distance;
 
-			raycastTop = Physics2D.BoxCast(bounds.center, bounds.size, 0, Vector2.down, 3, groundLayer);
+			raycastTop = Physics2D.BoxCast(boxCol.bounds.center, boxCol.bounds.size, 0, Vector2.down, 3, groundLayer);
 			space += raycastTop.distance;
 
-			if (space >= bounds.size.y) {
+			if (space >= boxCol.bounds.size.y) {
 				outputs[1] = true; // Can climb to here
-				ledgeGrabX = bounds.center.x + (direction ? -0.5f : 0.5f);
-				ledgeGrabY = bounds.center.y - (raycastTop.distance - 1);
+				ledgeGrabX = boxCol.bounds.center.x + (direction ? -0.5f : 0.5f);
+				ledgeGrabY = boxCol.bounds.center.y - (raycastTop.distance - 1);
 			}
 		}
-		bounds.center = centerWas;
+		boxCol.offset = offsetWas;
 		boxCol.size = sizeWas;
 
 		bool canSlide = true;
