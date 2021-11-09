@@ -119,8 +119,8 @@ public class playerMovement : MonoBehaviour {
 
 			if (space >= size.y) {
 				outputs[1] = true; // Can climb to here
-				ledgeGrabX = ledgeCol.bounds.center.x; //+ (direction? 0.5f : -0.5f);
-				ledgeGrabY = (ledgeCol.bounds.center.y - raycastTop.distance) + 0.2f + (col.bounds.size.y / 2);
+				ledgeGrabX = ledgeCol.bounds.center.x;
+				ledgeGrabY = (ledgeCol.bounds.center.y - raycastTop.distance) + 0.02f + (col.bounds.size.y / 2);
 			}
 		}
 
@@ -294,6 +294,7 @@ public class playerMovement : MonoBehaviour {
 			if (transform.position.y > ledgeGrabY) {
 				ledgeGrabStage = true;
 				rb.gravityScale = normalGravity;
+				transform.position = new Vector3(transform.position.x, ledgeGrabY);
 			}
 			if (ledgeGrabStage) {
 				if (ledgeGrabY - transform.position.y >= 2) { // Fail-safe
