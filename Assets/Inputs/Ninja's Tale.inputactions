@@ -1,5 +1,5 @@
 {
-    "name": "Tile platformer test",
+    "name": "Ninja's Tale",
     "maps": [
         {
             "name": "Player",
@@ -14,7 +14,15 @@
                     "interactions": ""
                 },
                 {
-                    "name": "Look",
+                    "name": "Aim",
+                    "type": "Value",
+                    "id": "e7c7f720-fe2a-4e05-9c94-88e08ab6b258",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "AimMove",
                     "type": "Value",
                     "id": "e2f0e52e-7759-4112-86db-f5148729a894",
                     "expectedControlType": "Vector2",
@@ -25,6 +33,14 @@
                     "name": "Jump",
                     "type": "Value",
                     "id": "f88b4901-2f26-4004-a5c7-27df5167cce3",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "Throw",
+                    "type": "Value",
+                    "id": "3090e3e4-ed19-4a41-91ec-0b6161e5790f",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
@@ -170,29 +186,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";Gamepad",
-                    "action": "Look",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "8c8e490b-c610-4785-884f-f04217b23ca4",
-                    "path": "<Pointer>/delta",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Keyboard&Mouse;Touch",
-                    "action": "Look",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "3e5f5442-8668-4b27-a940-df99bad7e831",
-                    "path": "<Joystick>/{Hatswitch}",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Joystick",
-                    "action": "Look",
+                    "action": "AimMove",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -215,6 +209,39 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c38b3f3d-a1e3-4ad3-aee7-13ea094e3930",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Throw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "80dca098-59ec-4433-bcb1-028f89339ec3",
+                    "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Throw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f38337fe-6e99-4de9-9617-14f1089c979d",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Aim",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

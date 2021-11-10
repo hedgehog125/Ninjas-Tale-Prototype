@@ -20,7 +20,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private int maxJumpHoldTime;
 	[SerializeField] private int maxJumpBufferTime;
 	[SerializeField] private float jumpPower;
-	[SerializeField] private float jumpHoldCurveSteepness; 
+	[SerializeField] private float jumpHoldCurveSteepness;
 	[SerializeField] private float jumpSpeedBoost;
 
 	[SerializeField] private float downFallBoost;
@@ -66,8 +66,8 @@ public class playerMovement : MonoBehaviour {
 	// Modified by visual child
 	public bool direction = true;
 
-	private void OnMove(InputValue movementValue) {
-		moveInput = movementValue.Get<Vector2>();
+	private void OnMove(InputValue input) {
+		moveInput = input.Get<Vector2>();
 
 		moveInputNeutralX = Mathf.Abs(moveInput.x) < moveDeadzone;
 		if (moveInputNeutralX) {
@@ -79,7 +79,7 @@ public class playerMovement : MonoBehaviour {
 		}
 	}
 	private void OnJump(InputValue input) {
-		jumpInput = input.Get<float>() > 0;
+		jumpInput = input.isPressed;
 	}
 
 
