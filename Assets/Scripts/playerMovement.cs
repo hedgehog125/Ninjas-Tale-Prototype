@@ -8,6 +8,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private GameObject ledgeGrabTester;
 
 	[SerializeField] private float walkAcceleration;
+	[SerializeField] private float moveAirAcceleration;
 	[SerializeField] private float maxWalkSpeed;
 	[SerializeField] private float moveDeadzone;
 	[SerializeField] private float neutralSpeedMaintenance;
@@ -192,7 +193,12 @@ public class playerMovement : MonoBehaviour {
 		}
 
 		if (canMove) {
-			vel.x += moveInput.x * walkAcceleration;
+			if (isOnGround) {
+				vel.x += moveInput.x * walkAcceleration;
+			}
+			else {
+				vel.x += moveInput.x * moveAirAcceleration;
+			}
 		}
 	}
 	private void JumpTick(ref Vector2 vel, bool isOnGround) {
@@ -325,8 +331,10 @@ public class playerMovement : MonoBehaviour {
 					vel.x *= neutralAirSpeedMaintenance;
 				}
 			}
-			else if (direction != moveInput.x > 0) {
-				vel.x *= turnSpeedMaintenance;
+			else if (direction != moveInput.x > 0 && Mathf.Abs(vel.x) > 1) {
+				if (isOnGround) {
+					vel.x *= turnSpeedMaintenance;
+                }
 			}
 
 			MoveTick(ref vel, isOnGround, ref isOnWall);
