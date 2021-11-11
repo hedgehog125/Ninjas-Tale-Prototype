@@ -5,11 +5,18 @@ using UnityEngine;
 public class katanaMovement : MonoBehaviour
 {
 	[SerializeField] private GameObject player;
+	[SerializeField] private GameObject visibleKatana;
 
 	[SerializeField] private float maxSpeed;
+	[SerializeField] private float rotationSpeed;
+
 	[SerializeField] private Vector2 playerOffset;
 	[SerializeField] private float passedTargetMaintainance;
 	[SerializeField] private int maxAge;
+	[SerializeField] private int maxStuckTime;
+
+	[SerializeField] private float returnAcceleration;
+	[SerializeField] private float maxReturnSpeed;
 
 
 
@@ -22,16 +29,31 @@ public class katanaMovement : MonoBehaviour
 	private Vector2 speed;
 	private bool hasPassedTarget;
 	private int age;
+	private int stuckTick;
+	private Vector2 lastPosition;
+	private bool spinDirection;
+	private float spinVelocity;
 
 
-	private void Awake() {
+	private void OnTriggerEnter2D(Collider2D collision) {
+		if (hasPassedTarget) {
+			if (collision.gameObject.CompareTag("PlayerCollectSmall")) {
+				gameObject.SetActive(false);
+				return;
+            }
+        }
+	}
+
+    private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		playerScript = player.GetComponent<playerMovement>();
 	}
 
-	private void Start() { // When thrown
+	public void MultipleStart() { // When thrown. Called by the attack script so it gets run for each throw instead of just once
+		gameObject.SetActive(true);
 		Vector2 position = new Vector2(player.transform.position.x, player.transform.position.y) + (playerOffset * new Vector2Int(playerScript.direction? 1 : -1, 0));
 		transform.position = position;
+		lastPosition = position - new Vector2(100, 100); // Don't trigger the hit detection on the first frame
 
 		Vector2 distance = target - position;
 		Vector2 signs = new Vector2(Mathf.Sign(distance.x), Mathf.Sign(distance.y));
@@ -49,33 +71,36 @@ public class katanaMovement : MonoBehaviour
 
 		hasPassedTarget = false;
 		age = 0;
+		stuckTick = 0;
+		spinDirection = Random.Range(0, 2) == 0;
 	}
 
 	private void FixedUpdate() {
+		Vector2 position2 = new Vector2(transform.position.x, transform.position.y);
+		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.075f) {
+			stuckTick++;
+			if (! hasPassedTarget) {
+				hasPassedTarget = true;
+				speed *= 0;
+            }
+        }
+		lastPosition = position2;
 		if (hasPassedTarget) {
-			gameObject.SetActive(false);
-			return;
+			target = new Vector2(player.transform.position.x, player.transform.position.y);
+			Vector2 direction = (target - position2).normalized;
+			rb.velocity += direction * returnAcceleration;
+			speed = rb.velocity;
 		}
 		else {
 			bool slowDown = false;
-			if (true || Mathf.Abs(speed.x) > Mathf.Abs(speed.y)) {
-				if (speed.x > 0) {
-					if (transform.position.x > target.x) {
-						slowDown = true;
-                    }
-				}
-				else {
-					if (transform.position.x < target.x) {
-						slowDown = true;
-					}
+			if (speed.x > 0) {
+				if (transform.position.x > target.x) {
+					slowDown = true;
 				}
 			}
 			else {
-				if (speed.y > 0) {
-
-				}
-				else {
-
+				if (transform.position.x < target.x) {
+					slowDown = true;
 				}
 			}
 
@@ -86,11 +111,14 @@ public class katanaMovement : MonoBehaviour
 					hasPassedTarget = true;
                 }
 			}
+			rb.velocity = speed;
 		}
-		rb.velocity = speed;
+
+		spinVelocity += spinDirection ? rotationSpeed : -rotationSpeed;
+		visibleKatana.transform.Rotate(0, 0, spinVelocity);
 
 		age++;
-		if (age > maxAge) {
+		if (age > maxAge || stuckTick > maxStuckTime) {
 			gameObject.SetActive(false);
         }
 	}

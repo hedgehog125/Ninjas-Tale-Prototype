@@ -38,6 +38,8 @@ public class playerMovement : MonoBehaviour {
 	public bool moveInputNeutralX = true;
 	public bool moveInputNeutralY = true;
 	private bool jumpInput;
+	public bool wasOnWall;
+	public bool wasOnGround;
 
 	private Rigidbody2D rb;
 	private Collider2D col;
@@ -48,18 +50,15 @@ public class playerMovement : MonoBehaviour {
 	private int jumpBufferTick;
 	private bool hasJumped;
 
-	public bool wasOnWall;
-	public bool wasOnGround;
-
 	private bool wallSlideDirection;
 	private bool wallJumpDirection;
 	private bool hasWallJumped;
 	private float wallJumpHeight;
 	private int wallJumpPreventBackwardsTick;
 	private bool ledgeGrabbing;
-	public float ledgeGrabX;
-	public float ledgeGrabY;
-	public bool ledgeGrabStage;
+	private float ledgeGrabX;
+	private float ledgeGrabY;
+	private bool ledgeGrabStage;
 
 	private float normalGravity;
 
@@ -109,11 +108,12 @@ public class playerMovement : MonoBehaviour {
 		if (rb.velocity.y > 0 || isOnGround) return outputs;
 		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
-		float distance = Mathf.Max(raycastCenter.distance - 0.05f, 0);
+
+		// TODO: disable friction instead of pushing out from wall
 
 		if (! ledgeCol.IsTouchingLayers(groundLayer)) {
 			RaycastHit2D raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.up, 3, groundLayer);
- 			float space = raycastTop.collider == null ? 3 : raycastTop.distance;
+ 			float space = raycastTop.collider == null? 3 : raycastTop.distance;
 
 			raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.down, 3, groundLayer);
 			space += raycastTop.distance;
@@ -136,10 +136,6 @@ public class playerMovement : MonoBehaviour {
 			}
 		}
 
-		if (! canSlide) { // To stop friction
-			distance = raycastCenter.distance;
-		}
-		transform.position = new Vector2(transform.position.x + (direction ? -distance : distance), transform.position.y);
 		if (! canSlide) return outputs;
 
 		hasJumped = false;

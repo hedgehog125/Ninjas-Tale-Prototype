@@ -4,7 +4,9 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Standable
+  - PlayerCollect
+  - PlayerMain
+  - PlayerCollectSmall
   layers:
   - Default
   - TransparentFX

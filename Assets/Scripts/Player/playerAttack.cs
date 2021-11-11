@@ -37,7 +37,6 @@ public class playerAttack : MonoBehaviour
 		cam = cameraObject.GetComponent<Camera>();
 	}
 	private void FixedUpdate() {
-		katanaScript.target = cam.ScreenToWorldPoint(targetInput);
 		if (throwInput || (throwBufferTick != 0 && throwBufferTick < maxThrowBufferTime)) {
 			if (katana.activeSelf) { // Already thrown, attempt to buffer
 				throwBufferTick++;
@@ -47,10 +46,14 @@ public class playerAttack : MonoBehaviour
 				}
 			}
 			else { // Can throw
+				katanaScript.target = cam.ScreenToWorldPoint(targetInput);
 				if (Mathf.Abs(Vector2.Distance(katanaScript.target, new Vector2(transform.position.x, transform.position.y))) >= minThrowDistance) {
-					katana.SetActive(true);
+					katanaScript.MultipleStart();
 					throwInput = false;
 				}
+
+				throwBufferTick = 0;
+				throwInput = false;
 			}
 		}
 	}
