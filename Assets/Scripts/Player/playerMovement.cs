@@ -32,18 +32,22 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float ledgeGrabAcceleration;
 	[SerializeField] private float ledgeGrabMaxSpeed;
 
-
-	// Needs to be read by the visual child
-	public Vector2 moveInput;
-	public bool moveInputNeutralX = true;
-	public bool moveInputNeutralY = true;
-	private bool jumpInput;
-	public bool wasOnWall;
-	public bool wasOnGround;
-
 	private Rigidbody2D rb;
 	private Collider2D col;
 	private BoxCollider2D ledgeCol;
+
+	// Needs to be read by the visual child
+	public float yAcceleration;
+	public bool moveInputNeutralX = true;
+	public bool moveInputNeutralY = true;
+	public bool wasOnWall;
+	public bool wasOnGround;
+
+	// Modified by visual child
+	public bool direction = true;
+
+	private Vector2 moveInput;
+	private bool jumpInput;
 
 	private int coyoteTick;
 	private int jumpHoldTick;
@@ -61,9 +65,7 @@ public class playerMovement : MonoBehaviour {
 	private bool ledgeGrabStage;
 
 	private float normalGravity;
-
-	// Modified by visual child
-	public bool direction = true;
+	private Vector2 velWas;
 
 	private void OnMove(InputValue input) {
 		moveInput = input.Get<Vector2>();
@@ -280,6 +282,8 @@ public class playerMovement : MonoBehaviour {
 
     private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
+		yAcceleration = (vel - velWas).y;
+		velWas = vel;
 
 		bool isOnGround = GroundDetectTick();
 		bool[] outputs = DetectWallSlideTick(isOnGround);

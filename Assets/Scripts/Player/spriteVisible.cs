@@ -8,6 +8,9 @@ public class spriteVisible : MonoBehaviour
     [SerializeField] private float stretchAmount;
     [SerializeField] private float maxStretch;
     [SerializeField] private float stretchMaintenance;
+	[SerializeField] private float stretchAcceleration;
+	[SerializeField] private float downwardsBias;
+
 	[SerializeField] private float walkBobSpeed;
 	[SerializeField] private float walkBobAmount;
 
@@ -17,6 +20,8 @@ public class spriteVisible : MonoBehaviour
     private playerMovement playerScript;
 
     private float stretchVel;
+	private float currentStretch;
+
 	private float walkBobTick;
 	private bool walkAnimation;
 	private bool walkAnimationEnding;
@@ -35,9 +40,11 @@ public class spriteVisible : MonoBehaviour
 		bool direction = ! ren.flipX;
 
 		Vector3 newScale = transform.localScale;
-        stretchVel += rb.velocity.y * stretchAmount;
-        newScale.x = Mathf.Max(Mathf.Min(1.0f + stretchVel, 1 + maxStretch), 1 - maxStretch);
-        newScale.y = Mathf.Max(Mathf.Min(1.0f - stretchVel, 1 + maxStretch), 1 - maxStretch);
+        stretchVel += (playerScript.yAcceleration > 0? playerScript.yAcceleration : (playerScript.yAcceleration * (downwardsBias + 1))) * stretchAmount;
+		currentStretch += (stretchVel - currentStretch) * stretchAcceleration;
+
+		newScale.x = Mathf.Max(Mathf.Min(1.0f + currentStretch, 1 + maxStretch), 1 - maxStretch);
+        newScale.y = Mathf.Max(Mathf.Min(1.0f - currentStretch, 1 + maxStretch), 1 - maxStretch);
         stretchVel *= stretchMaintenance;
 
 		if (playerScript.moveInputNeutralX || (! playerScript.wasOnGround)) {
