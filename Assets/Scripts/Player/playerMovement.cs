@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
-	[SerializeField] private LayerMask groundLayer;
+	public LayerMask groundLayer; // Read by player attack script
 	[SerializeField] private GameObject ledgeGrabTester;
 
 	[SerializeField] private float walkAcceleration;
@@ -108,8 +108,6 @@ public class playerMovement : MonoBehaviour {
 		if (rb.velocity.y > 0 || isOnGround) return outputs;
 		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
-
-		// TODO: disable friction instead of pushing out from wall
 
 		if (! ledgeCol.IsTouchingLayers(groundLayer)) {
 			RaycastHit2D raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.up, 3, groundLayer);
@@ -280,10 +278,6 @@ public class playerMovement : MonoBehaviour {
 		}
     }
 
-    public void Update() {
-		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.25f : -0.25f), col.bounds.center.y + ledgeGrabDistance) - new Vector2(col.bounds.center.x, col.bounds.center.y);
-	}
-
     private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 
@@ -341,5 +335,9 @@ public class playerMovement : MonoBehaviour {
         }
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
+	}
+
+	public void LateUpdate() {
+		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction ? 0.25f : -0.25f), col.bounds.center.y + ledgeGrabDistance) - new Vector2(col.bounds.center.x, col.bounds.center.y);
 	}
 }

@@ -10,7 +10,6 @@ public class katanaMovement : MonoBehaviour
 	[SerializeField] private float maxSpeed;
 	[SerializeField] private float rotationSpeed;
 
-	[SerializeField] private Vector2 playerOffset;
 	[SerializeField] private float passedTargetMaintainance;
 	[SerializeField] private int maxAge;
 	[SerializeField] private int maxStuckTime;
@@ -22,6 +21,9 @@ public class katanaMovement : MonoBehaviour
 
 	// Set by the player attack script
 	public Vector2 target;
+
+	// Read by it
+	public Vector2 playerOffset;
 
 	private Rigidbody2D rb;
 	private playerMovement playerScript;
@@ -51,7 +53,7 @@ public class katanaMovement : MonoBehaviour
 
 	public void MultipleStart() { // When thrown. Called by the attack script so it gets run for each throw instead of just once
 		gameObject.SetActive(true);
-		Vector2 position = new Vector2(player.transform.position.x, player.transform.position.y) + (playerOffset * new Vector2Int(playerScript.direction? 1 : -1, 0));
+		Vector2 position = new Vector2(player.transform.position.x, player.transform.position.y) + (playerOffset * new Vector2Int(playerScript.direction? 1 : -1, 1));
 		transform.position = position;
 		lastPosition = position - new Vector2(100, 100); // Don't trigger the hit detection on the first frame
 
@@ -76,7 +78,7 @@ public class katanaMovement : MonoBehaviour
 	}
 
 	private void FixedUpdate() {
-		Vector2 position2 = new Vector2(transform.position.x, transform.position.y);
+		Vector2 position2 = transform.position;
 		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.075f) {
 			stuckTick++;
 			if (! hasPassedTarget) {
@@ -86,7 +88,7 @@ public class katanaMovement : MonoBehaviour
         }
 		lastPosition = position2;
 		if (hasPassedTarget) {
-			target = new Vector2(player.transform.position.x, player.transform.position.y);
+			target = player.transform.position;
 			Vector2 direction = (target - position2).normalized;
 			rb.velocity += direction * returnAcceleration;
 			speed = rb.velocity;
