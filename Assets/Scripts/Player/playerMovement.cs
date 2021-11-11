@@ -28,6 +28,8 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float wallJumpPowerX;
 	[SerializeField] private float wallJumpPowerY;
 	[SerializeField] private int wallJumpPreventBackwardsTime;
+	[SerializeField] private float minSlideTriggerSpeed; // On the X axis, only when neutral
+	
 	[SerializeField] private float ledgeGrabDistance;
 	[SerializeField] private float ledgeGrabAcceleration;
 	[SerializeField] private float ledgeGrabMaxSpeed;
@@ -48,6 +50,7 @@ public class playerMovement : MonoBehaviour {
 
 	private Vector2 moveInput;
 	private bool jumpInput;
+	private bool jumpBufferInput; // Set to false after jumping
 
 	private int coyoteTick;
 	private int jumpHoldTick;
@@ -55,10 +58,15 @@ public class playerMovement : MonoBehaviour {
 	private bool hasJumped;
 
 	private bool wallSlideDirection;
+	private bool wallSlideBuffered;
+
 	private bool wallJumpDirection;
 	private bool hasWallJumped;
 	private float wallJumpHeight;
+	public int wallJumpCoyoteTick;
+	public bool wallJumpPendingDirection;
 	private int wallJumpPreventBackwardsTick;
+
 	private bool ledgeGrabbing;
 	private float ledgeGrabX;
 	private float ledgeGrabY;
@@ -81,6 +89,7 @@ public class playerMovement : MonoBehaviour {
 	}
 	private void OnJump(InputValue input) {
 		jumpInput = input.isPressed;
+		jumpBufferInput = jumpInput;
 	}
 
 
@@ -107,7 +116,11 @@ public class playerMovement : MonoBehaviour {
 		Vector2 size = col.bounds.size;
 
 		bool[] outputs = new bool[2];
-		if (rb.velocity.y > 0 || isOnGround) return outputs;
+		if (isOnGround) {
+			wallSlideBuffered = false;
+			wallJumpCoyoteTick = coyoteTime;
+			return outputs;
+		}
 		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
 
@@ -126,10 +139,11 @@ public class playerMovement : MonoBehaviour {
 		}
 
 		bool canSlide = true;
-		if (! wasOnWall) {
-			if (moveInputNeutralX) canSlide = false;
-			else if (moveInput.x > 0 != direction) canSlide = false; // Not moving towards the wall
+		if (! (wasOnWall || wallSlideBuffered)) {
+			if (moveInputNeutralX && Mathf.Abs(rb.velocity.x) < minSlideTriggerSpeed) canSlide = false;
+			else if ((! moveInputNeutralX) && moveInput.x > 0 != direction) canSlide = false; // Not moving towards the wall
 		}
+
 		if (canSlide && hasWallJumped) { // Extra requirements if the player has wall jumped since touching the ground
 			if (direction == wallJumpDirection && transform.position.y > wallJumpHeight) { // The player last jumped off this wall from a lower height, can't wall jump
 				canSlide = false;
@@ -138,8 +152,20 @@ public class playerMovement : MonoBehaviour {
 
 		if (! canSlide) return outputs;
 
+		bool buffered = jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime;
+		if (rb.velocity.y > 0 && (! (jumpInput || buffered))) {
+			wallSlideBuffered = true;
+			return outputs;
+        }
+		else {
+			wallSlideBuffered = false;
+		}
+
 		hasJumped = false;
 		outputs[0] = true;
+		wallJumpCoyoteTick = 0;
+		wallJumpPendingDirection = direction;
+
 		return outputs;
 	}
 
@@ -205,12 +231,14 @@ public class playerMovement : MonoBehaviour {
 				if (justStarted) {
 					jumpHoldTick = 1;
 					jumpBufferTick = 0;
-					if (! jumpInput) { // Unbuffer
-						jumpBufferTick = maxJumpBufferTime;
-					}
+					coyoteTick = coyoteTime;
+					jumpBufferInput = false;
 				}
 				else {
 					jumpHoldTick++;
+					if (jumpHoldTick == maxJumpHoldTime) {
+						jumpInput = false;
+                    }
 				}
 
 				hasJumped = true;
@@ -223,17 +251,15 @@ public class playerMovement : MonoBehaviour {
 				coyoteTick = coyoteTime;
 
 			}
-			if (! isOnGround) {
+			if (jumpBufferInput && (! isOnGround)) {
 				if (jumpBufferTick == maxJumpBufferTime) {
-					jumpInput = false;
+					jumpBufferInput = false;
+					jumpBufferTick = 0;
 				}
-				jumpBufferTick++;
+				else {
+					jumpBufferTick++;
+                }
 			}
-		}
-
-		if (! jumpInput) {
-			jumpBufferTick = 0;
-			jumpHoldTick = maxJumpHoldTime;
 		}
 	}
 	private void WallTick(ref Vector2 vel, bool isOnGround, bool isOnWall, bool canLedgeGrab) {
@@ -254,12 +280,18 @@ public class playerMovement : MonoBehaviour {
 			hasWallJumped = false;
 			wallJumpPreventBackwardsTick = 0;
 		}
-		else if (isOnWall) {
-			if (jumpInput) {
+		else if (isOnWall || (wallJumpCoyoteTick != 0 && wallJumpCoyoteTick < coyoteTime)) {
+			bool buffered = jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime;
+			if (jumpInput || buffered) {
 				hasWallJumped = true;
-				wallJumpDirection = direction;
+				wallJumpDirection = wallJumpPendingDirection;
 				wallJumpHeight = transform.position.y;
+
 				jumpBufferTick = 0;
+				wallJumpCoyoteTick = coyoteTime;
+
+				jumpInput = false;
+				jumpBufferInput = false;
 
 				if (canLedgeGrab) {
 					ledgeGrabbing = true;
@@ -270,8 +302,8 @@ public class playerMovement : MonoBehaviour {
 					vel.y = 0;
 				}
 				else {
-					vel.x = direction? -wallJumpPowerX : wallJumpPowerX;
-					vel.y += wallJumpPowerY;
+					vel.x = wallJumpPendingDirection? -wallJumpPowerX : wallJumpPowerX;
+					vel.y = wallJumpPowerY;
 
 					wallJumpPreventBackwardsTick = wallJumpPreventBackwardsTime;
 					rb.gravityScale = normalGravity;
@@ -336,7 +368,11 @@ public class playerMovement : MonoBehaviour {
 				JumpTick(ref vel, isOnGround);
 			}
 			WallTick(ref vel, isOnGround, isOnWall, canLedgeGrab);
-        }
+
+			if ((! isOnWall) && wallJumpCoyoteTick < coyoteTime) {
+				wallJumpCoyoteTick++;
+			}
+		}
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
 	}
