@@ -8,6 +8,10 @@ public class katanaMovement : MonoBehaviour
 
 	[SerializeField] private float maxSpeed;
 	[SerializeField] private Vector2 playerOffset;
+	[SerializeField] private float passedTargetMaintainance;
+	[SerializeField] private int maxAge;
+
+
 
 	// Set by the player attack script
 	public Vector2 target;
@@ -16,6 +20,8 @@ public class katanaMovement : MonoBehaviour
 	private playerMovement playerScript;
 
 	private Vector2 speed;
+	private bool hasPassedTarget;
+	private int age;
 
 
 	private void Awake() {
@@ -40,9 +46,52 @@ public class katanaMovement : MonoBehaviour
 			speed.y = maxSpeed;
 		}
 		speed *= signs;
+
+		hasPassedTarget = false;
+		age = 0;
 	}
 
 	private void FixedUpdate() {
+		if (hasPassedTarget) {
+			gameObject.SetActive(false);
+			return;
+		}
+		else {
+			bool slowDown = false;
+			if (true || Mathf.Abs(speed.x) > Mathf.Abs(speed.y)) {
+				if (speed.x > 0) {
+					if (transform.position.x > target.x) {
+						slowDown = true;
+                    }
+				}
+				else {
+					if (transform.position.x < target.x) {
+						slowDown = true;
+					}
+				}
+			}
+			else {
+				if (speed.y > 0) {
+
+				}
+				else {
+
+				}
+			}
+
+			if (slowDown) {
+				speed *= passedTargetMaintainance;
+				if (Mathf.Abs(speed.magnitude) < 0.2f) {
+					speed *= 0;
+					hasPassedTarget = true;
+                }
+			}
+		}
 		rb.velocity = speed;
+
+		age++;
+		if (age > maxAge) {
+			gameObject.SetActive(false);
+        }
 	}
 }
