@@ -14,6 +14,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float neutralSpeedMaintenance;
 	[SerializeField] private float neutralAirSpeedMaintenance;
 	[SerializeField] private float turnSpeedMaintenance;
+	[SerializeField] private float turnAirSpeedMultiplier;
 
 
 	[SerializeField] private int coyoteTime;
@@ -34,11 +35,20 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float ledgeGrabAcceleration;
 	[SerializeField] private float ledgeGrabMaxSpeed;
 
+	// These are katana related and are only used in the attack script but they're movement related so the values are set here
+	public float throwHeightBoost;
+	public int throwTime;
+	public float throwMomentumCancelMultiplier; // Backwards and neutral
+	public float throwMomentumReduceMultiplier; // Forwards
+
+
+
 	private Rigidbody2D rb;
 	private Collider2D col;
 	private BoxCollider2D ledgeCol;
+	private playerAttack attackScript;
 
-	// Needs to be read by the visual child
+	// Needs to be read by the visual child and the player attack script
 	public float yAcceleration;
 	public bool moveInputNeutralX = true;
 	public bool moveInputNeutralY = true;
@@ -53,7 +63,7 @@ public class playerMovement : MonoBehaviour {
 	private bool jumpBufferInput; // Set to false after jumping
 
 	private int coyoteTick;
-	private int jumpHoldTick;
+	public int jumpHoldTick;
 	private int jumpBufferTick;
 	private bool hasJumped;
 
@@ -63,8 +73,8 @@ public class playerMovement : MonoBehaviour {
 	private bool wallJumpDirection;
 	private bool hasWallJumped;
 	private float wallJumpHeight;
-	public int wallJumpCoyoteTick;
-	public bool wallJumpPendingDirection;
+	private int wallJumpCoyoteTick;
+	private bool wallJumpPendingDirection;
 	private int wallJumpPreventBackwardsTick;
 
 	private bool ledgeGrabbing;
@@ -98,6 +108,8 @@ public class playerMovement : MonoBehaviour {
 		col = GetComponent<Collider2D>();
 		ledgeCol = ledgeGrabTester.GetComponent<BoxCollider2D>();
 		ledgeCol.size = new Vector2(col.bounds.size.x, 0.1f);
+
+		attackScript = GetComponent<playerAttack>();
 
 		normalGravity = rb.gravityScale;
 	}
@@ -153,14 +165,12 @@ public class playerMovement : MonoBehaviour {
 		if (! canSlide) return outputs;
 
 		bool buffered = jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime;
-		if (rb.velocity.y > 0 && (! (jumpInput || buffered))) {
+		if (rb.velocity.y > 0 && (! ((jumpInput && (jumpHoldTick == 0 || jumpHoldTick == maxJumpHoldTime)) || buffered))) {
 			wallSlideBuffered = true;
 			return outputs;
         }
-		else {
-			wallSlideBuffered = false;
-		}
 
+		wallSlideBuffered = false;
 		hasJumped = false;
 		outputs[0] = true;
 		wallJumpCoyoteTick = 0;
@@ -186,7 +196,7 @@ public class playerMovement : MonoBehaviour {
 
 		return isOnGround;
 	}
-    private void MoveTick(ref Vector2 vel, bool isOnGround, ref bool isOnWall) {
+    private void MoveTick(ref Vector2 vel, bool isOnGround, ref bool isOnWall, bool reduceToAirTurnSpeed) {
 		if ((! isOnGround) && (! moveInputNeutralY)) {
 			if (isOnWall) {
 				wasOnWall = false;
@@ -204,22 +214,32 @@ public class playerMovement : MonoBehaviour {
 		}
 
 		bool canMove = true;
-		if (isOnWall || wallJumpPreventBackwardsTick != 0) { // You can't move towards the wall
+		if (isOnWall) { // Can't move towards the wall
 			if (moveInput.x > 0) {
 				if (wallSlideDirection) canMove = false;
 			}
 			else if (! wallSlideDirection) canMove = false;
-			if (wallJumpPreventBackwardsTick != 0) {
-				wallJumpPreventBackwardsTick--;
-			}
 		}
+		if (attackScript.throwTick != 0) { // Can only move in the direction the katana was thrown
+			if (moveInput.x > 0) {
+				if (! attackScript.throwDirection) canMove = false;
+			}
+			else if (attackScript.throwDirection) canMove = false;
+		}
+
+		float xInput = moveInput.x;
+		if (wallJumpPreventBackwardsTick != 0) { // You have to move away from the wall
+			xInput = wallJumpDirection? -1 : 1;
+			wallJumpPreventBackwardsTick--;
+		}
+
 
 		if (canMove) {
 			if (isOnGround) {
-				vel.x += moveInput.x * walkAcceleration;
+				vel.x += xInput * walkAcceleration;
 			}
 			else {
-				vel.x += moveInput.x * moveAirAcceleration;
+				vel.x += xInput * (moveAirAcceleration * (reduceToAirTurnSpeed? turnAirSpeedMultiplier : 1));
 			}
 		}
 	}
@@ -238,7 +258,7 @@ public class playerMovement : MonoBehaviour {
 					jumpHoldTick++;
 					if (jumpHoldTick == maxJumpHoldTime) {
 						jumpInput = false;
-                    }
+					}
 				}
 
 				hasJumped = true;
@@ -282,7 +302,7 @@ public class playerMovement : MonoBehaviour {
 		}
 		else if (isOnWall || (wallJumpCoyoteTick != 0 && wallJumpCoyoteTick < coyoteTime)) {
 			bool buffered = jumpBufferTick != 0 && jumpBufferTick < maxJumpBufferTime;
-			if (jumpInput || buffered) {
+			if ((jumpInput && (jumpHoldTick == 0 || jumpHoldTick == maxJumpHoldTime)) || buffered) {
 				hasWallJumped = true;
 				wallJumpDirection = wallJumpPendingDirection;
 				wallJumpHeight = transform.position.y;
@@ -303,7 +323,8 @@ public class playerMovement : MonoBehaviour {
 				}
 				else {
 					vel.x = wallJumpPendingDirection? -wallJumpPowerX : wallJumpPowerX;
-					vel.y = wallJumpPowerY;
+					if (vel.y < 0) vel.y = 0;
+					vel.y += wallJumpPowerY;
 
 					wallJumpPreventBackwardsTick = wallJumpPreventBackwardsTime;
 					rb.gravityScale = normalGravity;
@@ -349,6 +370,7 @@ public class playerMovement : MonoBehaviour {
 			}
 		}
 		else {
+			bool turning = false;
 			if (moveInputNeutralX) {
 				if (isOnGround) {
 					vel.x *= neutralSpeedMaintenance;
@@ -358,12 +380,13 @@ public class playerMovement : MonoBehaviour {
 				}
 			}
 			else if (direction != moveInput.x > 0 && Mathf.Abs(vel.x) > 1) {
+				turning = true;
 				if (isOnGround) {
 					vel.x *= turnSpeedMaintenance;
                 }
 			}
 
-			MoveTick(ref vel, isOnGround, ref isOnWall);
+			MoveTick(ref vel, isOnGround, ref isOnWall, turning);
 			if (! isOnWall) {
 				JumpTick(ref vel, isOnGround);
 			}

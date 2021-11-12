@@ -37,6 +37,9 @@ public class spriteVisible : MonoBehaviour
         if (Mathf.Abs(rb.velocity.x) > 0.1f) {
             ren.flipX = rb.velocity.x < 0;
         }
+		else {
+			ren.flipX = ! playerScript.direction; 
+		}
 		bool direction = ! ren.flipX;
 
 		Vector3 newScale = transform.localScale;

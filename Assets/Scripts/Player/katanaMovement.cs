@@ -15,7 +15,6 @@ public class katanaMovement : MonoBehaviour
 	[SerializeField] private int maxStuckTime;
 
 	[SerializeField] private float returnAcceleration;
-	[SerializeField] private float maxReturnSpeed;
 
 
 
@@ -23,9 +22,11 @@ public class katanaMovement : MonoBehaviour
 	public Vector2 target;
 
 	// Read by it
-	public Vector2 playerOffset;
+	public float heightOffset;
 
 	private Rigidbody2D rb;
+	private BoxCollider2D col;
+	private BoxCollider2D playerCol;
 	private playerMovement playerScript;
 
 	private Vector2 speed;
@@ -36,6 +37,9 @@ public class katanaMovement : MonoBehaviour
 	private bool spinDirection;
 	private float spinVelocity;
 
+	private Vector2 GetOffset() {
+		return new Vector2(((playerCol.size.x + col.size.x) / 2) * (playerScript.direction? 1 : -1), 1);
+	}
 
 	private void OnTriggerEnter2D(Collider2D collision) {
 		if (hasPassedTarget) {
@@ -48,12 +52,15 @@ public class katanaMovement : MonoBehaviour
 
     private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
+		col = GetComponent<BoxCollider2D>();
+
+		playerCol = player.GetComponent<BoxCollider2D>();
 		playerScript = player.GetComponent<playerMovement>();
 	}
 
 	public void MultipleStart() { // When thrown. Called by the attack script so it gets run for each throw instead of just once
 		gameObject.SetActive(true);
-		Vector2 position = new Vector2(player.transform.position.x, player.transform.position.y) + (playerOffset * new Vector2Int(playerScript.direction? 1 : -1, 1));
+		Vector2 position = (Vector2)player.transform.position + GetOffset();
 		transform.position = position;
 		lastPosition = position - new Vector2(100, 100); // Don't trigger the hit detection on the first frame
 
@@ -79,7 +86,7 @@ public class katanaMovement : MonoBehaviour
 
 	private void FixedUpdate() {
 		Vector2 position2 = transform.position;
-		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.075f) {
+		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.1f) {
 			stuckTick++;
 			if (! hasPassedTarget) {
 				hasPassedTarget = true;
@@ -88,7 +95,7 @@ public class katanaMovement : MonoBehaviour
         }
 		lastPosition = position2;
 		if (hasPassedTarget) {
-			target = player.transform.position;
+			target = (Vector2)player.transform.position + GetOffset();
 			Vector2 direction = (target - position2).normalized;
 			rb.velocity += direction * returnAcceleration;
 			speed = rb.velocity;
@@ -116,7 +123,7 @@ public class katanaMovement : MonoBehaviour
 			rb.velocity = speed;
 		}
 
-		spinVelocity += spinDirection ? rotationSpeed : -rotationSpeed;
+		spinVelocity += spinDirection? rotationSpeed : -rotationSpeed;
 		visibleKatana.transform.Rotate(0, 0, spinVelocity);
 
 		age++;
