@@ -86,6 +86,12 @@ public class playerAttack : MonoBehaviour
 							else {
 								vel.x *= moveScript.throwMomentumReduceMultiplier;
 							}
+							if (vel.y < 0) {
+								vel.y = 0;
+							}
+							else {
+								vel.y *= moveScript.throwMomentumReduceMultiplier;
+							}
 
 							throwTick = 1;
 							throwDirection = moveScript.direction;
@@ -106,7 +112,6 @@ public class playerAttack : MonoBehaviour
 		}
 		if (throwTick != 0) {
 			if (! moveScript.wasOnGround) {
-				if (vel.y < 0) vel.y = 0;
 				vel.y += moveScript.throwHeightBoost;
 			}
 

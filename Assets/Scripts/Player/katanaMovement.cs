@@ -96,9 +96,30 @@ public class katanaMovement : MonoBehaviour
 		lastPosition = position2;
 		if (hasPassedTarget) {
 			target = (Vector2)player.transform.position + GetOffset();
-			Vector2 direction = (target - position2).normalized;
-			rb.velocity += direction * returnAcceleration;
+
+			Vector2 distance = target - position2;
+			Vector2 direction = distance.normalized;
 			speed = rb.velocity;
+			speed += direction * returnAcceleration;
+
+			float ratio = Mathf.Abs(speed.x) / Mathf.Abs(speed.y);
+			float max = Mathf.Abs(distance.magnitude) * 10;
+			if (Mathf.Abs(speed.x) + Mathf.Abs(speed.y) > max) {
+				Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
+				speed = new Vector2(Mathf.Abs(distance.x), Mathf.Abs(distance.y));
+
+				if (ratio > 1) {
+					speed.x = max;
+					speed.y = max / ratio;
+				}
+				else {
+					speed.x = max * ratio;
+					speed.y = max;
+				}
+				speed *= signs;
+			}
+
+			rb.velocity = speed;
 		}
 		else {
 			bool slowDown = false;
@@ -123,8 +144,7 @@ public class katanaMovement : MonoBehaviour
 			rb.velocity = speed;
 		}
 
-		spinVelocity += spinDirection? rotationSpeed : -rotationSpeed;
-		visibleKatana.transform.Rotate(0, 0, spinVelocity);
+		visibleKatana.transform.Rotate(0, 0, spinDirection ? rotationSpeed : -rotationSpeed);
 
 		age++;
 		if (age > maxAge || stuckTick > maxStuckTime) {
