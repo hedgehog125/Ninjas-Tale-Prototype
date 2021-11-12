@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class katanaMovement : MonoBehaviour
 {
@@ -15,6 +16,10 @@ public class katanaMovement : MonoBehaviour
 	[SerializeField] private int maxStuckTime;
 
 	[SerializeField] private float returnAcceleration;
+	[SerializeField] private float minReturnSpeed;
+	[SerializeField] private float maxReturnSpeed;
+
+	// TODO: implement max return speed and vary spin speed based on velocity
 
 
 
@@ -28,17 +33,19 @@ public class katanaMovement : MonoBehaviour
 	private BoxCollider2D col;
 	private BoxCollider2D playerCol;
 	private playerMovement playerScript;
+	private playerAttack attackScript;
+	
 
 	private Vector2 speed;
 	private bool hasPassedTarget;
+	private bool hasReachedMin;
 	private int age;
 	private int stuckTick;
 	private Vector2 lastPosition;
 	private bool spinDirection;
-	private float spinVelocity;
 
 	private Vector2 GetOffset() {
-		return new Vector2(((playerCol.size.x + col.size.x) / 2) * (playerScript.direction? 1 : -1), 1);
+		return new Vector2(((playerCol.size.x + col.size.x) / 2) * (playerScript.direction? 1 : -1), heightOffset);
 	}
 
 	private void OnTriggerEnter2D(Collider2D collision) {
@@ -56,6 +63,7 @@ public class katanaMovement : MonoBehaviour
 
 		playerCol = player.GetComponent<BoxCollider2D>();
 		playerScript = player.GetComponent<playerMovement>();
+		attackScript = player.GetComponent<playerAttack>();
 	}
 
 	public void MultipleStart() { // When thrown. Called by the attack script so it gets run for each throw instead of just once
@@ -77,6 +85,8 @@ public class katanaMovement : MonoBehaviour
 			speed.y = maxSpeed;
 		}
 		speed *= signs;
+		visibleKatana.transform.rotation = Quaternion.identity; // Reset the rotation
+
 
 		hasPassedTarget = false;
 		age = 0;
@@ -93,6 +103,13 @@ public class katanaMovement : MonoBehaviour
 				speed *= 0;
             }
         }
+		if (! hasPassedTarget) {
+			if (attackScript.recallInput) {
+				hasPassedTarget = true;
+				speed *= -0.2f;
+			}
+		}
+
 		lastPosition = position2;
 		if (hasPassedTarget) {
 			target = (Vector2)player.transform.position + GetOffset();
@@ -103,21 +120,40 @@ public class katanaMovement : MonoBehaviour
 			speed += direction * returnAcceleration;
 
 			float ratio = Mathf.Abs(speed.x) / Mathf.Abs(speed.y);
-			float max = Mathf.Abs(distance.magnitude) * 10;
-			if (Mathf.Abs(speed.x) + Mathf.Abs(speed.y) > max) {
-				Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
-				speed = new Vector2(Mathf.Abs(distance.x), Mathf.Abs(distance.y));
+			if (Mathf.Abs(speed.x) < minReturnSpeed || Mathf.Abs(speed.y) < minReturnSpeed) {
+				if (hasReachedMin) {
+					Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
+					speed = new Vector2(Mathf.Abs(speed.x), Mathf.Abs(speed.y));
 
-				if (ratio > 1) {
-					speed.x = max;
-					speed.y = max / ratio;
+					if (ratio > 1) {
+						speed.x = minReturnSpeed;
+						speed.y = minReturnSpeed / ratio;
+					}
+					else {
+						speed.x = minReturnSpeed * ratio;
+						speed.y = minReturnSpeed;
+					}
+					speed *= signs;
 				}
-				else {
-					speed.x = max * ratio;
-					speed.y = max;
-				}
-				speed *= signs;
 			}
+			else {
+				hasReachedMin = true;
+				float max = Mathf.Min(Mathf.Abs(distance.magnitude) * 10, maxReturnSpeed);
+				if (Mathf.Abs(speed.x) > max || Mathf.Abs(speed.y) > max) {
+					Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
+					speed = new Vector2(Mathf.Abs(speed.x), Mathf.Abs(speed.y));
+
+					if (ratio > 1) {
+						speed.x = max;
+						speed.y = max / ratio;
+					}
+					else {
+						speed.x = max * ratio;
+						speed.y = max;
+					}
+					speed *= signs;
+				}
+            }
 
 			rb.velocity = speed;
 		}
@@ -144,7 +180,7 @@ public class katanaMovement : MonoBehaviour
 			rb.velocity = speed;
 		}
 
-		visibleKatana.transform.Rotate(0, 0, spinDirection ? rotationSpeed : -rotationSpeed);
+		visibleKatana.transform.Rotate(0, 0, spinDirection? rotationSpeed : -rotationSpeed);
 
 		age++;
 		if (age > maxAge || stuckTick > maxStuckTime) {

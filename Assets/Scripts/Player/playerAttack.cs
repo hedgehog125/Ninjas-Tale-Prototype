@@ -26,12 +26,16 @@ public class playerAttack : MonoBehaviour
 	private bool throwInput;
 	public Vector2 targetInput = new Vector2(0, 0);
 	public Vector2 moveInput;
+	public bool recallInput; // Read by katana
 
 	private int throwBufferTick;
 
 
 	private void OnThrow(InputValue input) {
 		throwInput = input.isPressed;
+	}
+	private void OnRecall(InputValue input) {
+		recallInput = input.isPressed;
 	}
 	private void OnAim(InputValue input) {
 		targetInput = input.Get<Vector2>();
