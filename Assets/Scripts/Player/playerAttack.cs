@@ -7,7 +7,7 @@ public class playerAttack : MonoBehaviour
 {
 	[SerializeField] private GameObject katana;
 	[SerializeField] private GameObject cameraObject;
-	[SerializeField] private BoxCollider2D canThrowCol;
+	[SerializeField] public BoxCollider2D canThrowCol; // Read by katana movement
 
 	[SerializeField] private int maxThrowBufferTime;
 	[SerializeField] private float minThrowDistance;
