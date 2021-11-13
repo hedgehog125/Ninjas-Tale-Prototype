@@ -14,12 +14,15 @@ public class katanaMovement : MonoBehaviour
 	[SerializeField] private float passedTargetMaintainance;
 	[SerializeField] private int maxAge;
 	[SerializeField] private int maxStuckTime;
+	[SerializeField] private int maxHoldTime;
 
 	[SerializeField] private float returnAcceleration;
+	[SerializeField] private float recallAcceleration;
+	[SerializeField] private float recallBoost;
 	[SerializeField] private float minReturnSpeed;
 	[SerializeField] private float maxReturnSpeed;
 
-	// TODO: implement max return speed and vary spin speed based on velocity
+	// TODO: implement max return speed and vary spin speed based on velocity <============ Needs debugging as well
 
 
 
@@ -38,11 +41,18 @@ public class katanaMovement : MonoBehaviour
 
 	private Vector2 speed;
 	private bool hasPassedTarget;
+	private bool returning;
 	private bool hasReachedMin;
+
 	private int age;
 	private int stuckTick;
+	private int holdTick;
+
+
 	private Vector2 lastPosition;
+	private bool recalling;
 	private bool spinDirection;
+
 
 	private Vector2 GetOffset() {
 		return new Vector2(((playerCol.size.x + col.size.x) / 2) * (playerScript.direction? 1 : -1), heightOffset);
@@ -89,73 +99,105 @@ public class katanaMovement : MonoBehaviour
 
 
 		hasPassedTarget = false;
+		recalling = false;
+		returning = false;
 		age = 0;
 		stuckTick = 0;
+		holdTick = 0;
 		spinDirection = Random.Range(0, 2) == 0;
 	}
 
 	private void FixedUpdate() {
 		Vector2 position2 = transform.position;
-		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.1f) {
+
+		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.1f && ((! hasPassedTarget) || returning)) {
 			stuckTick++;
 			if (! hasPassedTarget) {
 				hasPassedTarget = true;
-				speed *= 0;
-            }
-        }
-		if (! hasPassedTarget) {
-			if (attackScript.recallInput) {
-				hasPassedTarget = true;
-				speed *= -0.2f;
+				rb.velocity *= 0;
+			}
+		}
+
+		if (attackScript.recallInput) {
+			if (! recalling) {
+				if (hasPassedTarget) {
+					rb.velocity += rb.velocity.normalized * recallBoost;
+				}
+				else {
+					Vector2 direction = rb.velocity.normalized;
+					rb.velocity *= 0;
+					rb.velocity -= direction * recallBoost;
+					hasPassedTarget = true;
+				}
+				recalling = true;
+			}
+		}
+		if (hasPassedTarget) {
+			if (attackScript.throwHoldInput) {
+				if (holdTick == maxHoldTime) {
+					returning = true;
+				}
+				else {
+					holdTick++;
+				}
+			}
+			else {
+				returning = true;
 			}
 		}
 
 		lastPosition = position2;
 		if (hasPassedTarget) {
-			target = (Vector2)player.transform.position + GetOffset();
+			if (returning) {
+				target = (Vector2)player.transform.position + GetOffset();
 
-			Vector2 distance = target - position2;
-			Vector2 direction = distance.normalized;
-			speed = rb.velocity;
-			speed += direction * returnAcceleration;
+				Vector2 distance = target - position2;
+				Vector2 direction = distance.normalized;
+				speed = rb.velocity;
+				speed += direction * (recalling? recallAcceleration : returnAcceleration);
 
-			float ratio = Mathf.Abs(speed.x) / Mathf.Abs(speed.y);
-			if (Mathf.Abs(speed.x) < minReturnSpeed || Mathf.Abs(speed.y) < minReturnSpeed) {
-				if (hasReachedMin) {
-					Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
-					speed = new Vector2(Mathf.Abs(speed.x), Mathf.Abs(speed.y));
+				float ratio = Mathf.Abs(speed.x) / Mathf.Abs(speed.y);
+				if (Mathf.Abs(speed.x) < minReturnSpeed || Mathf.Abs(speed.y) < minReturnSpeed) {
+					if (hasReachedMin) {
+						Debug.Log("A");
+						Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
+						speed = new Vector2(Mathf.Abs(speed.x), Mathf.Abs(speed.y));
 
-					if (ratio > 1) {
-						speed.x = minReturnSpeed;
-						speed.y = minReturnSpeed / ratio;
+						if (ratio > 1) {
+							speed.x = minReturnSpeed;
+							speed.y = minReturnSpeed / ratio;
+						}
+						else {
+							speed.x = minReturnSpeed * ratio;
+							speed.y = minReturnSpeed;
+						}
+						speed *= signs;
 					}
-					else {
-						speed.x = minReturnSpeed * ratio;
-						speed.y = minReturnSpeed;
-					}
-					speed *= signs;
 				}
+				else {
+					//hasReachedMin = true;
+					float max = Mathf.Max(Mathf.Abs(distance.magnitude) * 10, maxReturnSpeed) * 1000;
+					if (Mathf.Abs(speed.x) > max || Mathf.Abs(speed.y) > max) {
+						Debug.Log("B");
+						Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
+						speed = new Vector2(Mathf.Abs(speed.x), Mathf.Abs(speed.y));
+
+						if (ratio > 1) {
+							speed.x = max;
+							speed.y = max / ratio;
+						}
+						else {
+							speed.x = max * ratio;
+							speed.y = max;
+						}
+						speed *= signs;
+					}
+				}
+
+				rb.velocity = speed;
+
+				age++;
 			}
-			else {
-				hasReachedMin = true;
-				float max = Mathf.Min(Mathf.Abs(distance.magnitude) * 10, maxReturnSpeed);
-				if (Mathf.Abs(speed.x) > max || Mathf.Abs(speed.y) > max) {
-					Vector2 signs = new Vector2(Mathf.Sign(speed.x), Mathf.Sign(speed.y));
-					speed = new Vector2(Mathf.Abs(speed.x), Mathf.Abs(speed.y));
-
-					if (ratio > 1) {
-						speed.x = max;
-						speed.y = max / ratio;
-					}
-					else {
-						speed.x = max * ratio;
-						speed.y = max;
-					}
-					speed *= signs;
-				}
-            }
-
-			rb.velocity = speed;
 		}
 		else {
 			bool slowDown = false;
@@ -180,11 +222,10 @@ public class katanaMovement : MonoBehaviour
 			rb.velocity = speed;
 		}
 
-		visibleKatana.transform.Rotate(0, 0, spinDirection? rotationSpeed : -rotationSpeed);
-
-		age++;
 		if (age > maxAge || stuckTick > maxStuckTime) {
 			gameObject.SetActive(false);
-        }
+		}
+
+		visibleKatana.transform.Rotate(0, 0, Mathf.Abs(speed.magnitude) * (spinDirection? rotationSpeed : -rotationSpeed));
 	}
 }
