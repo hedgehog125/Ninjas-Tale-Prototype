@@ -2,20 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class playerDamage : MonoBehaviour
-{
+public class playerDamage : MonoBehaviour {
+	[Header("Objects")]
 	[SerializeField] private GameObject healthObject;
+
+	[Header("")]
 	[SerializeField] private int maxHealth;
-	[SerializeField] private int stunTime;
-	[SerializeField] private int invulnerabilityTime;
 	[SerializeField] private Vector2 knockbackAmount;
 
+	[Header("Times")]
+	[SerializeField] private int stunTime;
+	[SerializeField] private int invulnerabilityTime;
 
 
 	private healthBarController healthDisplay;
 	private Rigidbody2D rb;
-	private BoxCollider2D col;
-
 
 	private int health;
 	private int invulnerabilityTick;
@@ -27,7 +28,6 @@ public class playerDamage : MonoBehaviour
 		healthDisplay = healthObject.GetComponent<healthBarController>();
 
 		rb = GetComponent<Rigidbody2D>();
-		col = GetComponent<BoxCollider2D>();
 
 		health = maxHealth;
 	}

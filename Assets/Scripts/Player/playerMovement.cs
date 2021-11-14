@@ -4,9 +4,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class playerMovement : MonoBehaviour {
-	public LayerMask groundLayer; // Read by player attack script
+	[Header("Objects and Layers")]
+	[SerializeField] public LayerMask groundLayer; // Read by player attack script
 	[SerializeField] private GameObject ledgeGrabTester;
 
+	[Header("Movement")]
 	[SerializeField] private float walkAcceleration;
 	[SerializeField] private float moveAirAcceleration;
 	[SerializeField] private float maxWalkSpeed;
@@ -17,6 +19,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float turnAirSpeedMultiplier;
 
 
+	[Header("Jumping")]
 	[SerializeField] private int coyoteTime;
 	[SerializeField] private int maxJumpHoldTime;
 	[SerializeField] private int maxJumpBufferTime;
@@ -24,18 +27,21 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float jumpHoldCurveSteepness;
 	[SerializeField] private float jumpSpeedBoost;
 
+	[Header("Wall Sliding and Jumping")]
 	[SerializeField] private float downFallBoost;
 	[SerializeField] private float wallSlidingSpeed;
+	[SerializeField] private float minSlideTriggerSpeed; // On the X axis, only when neutral
 	[SerializeField] private float wallJumpPowerX;
 	[SerializeField] private float wallJumpPowerY;
 	[SerializeField] private int wallJumpPreventBackwardsTime;
-	[SerializeField] private float minSlideTriggerSpeed; // On the X axis, only when neutral
-	
+
+	[Header("Ledge Grabbing")]
 	[SerializeField] private float ledgeGrabDistance;
 	[SerializeField] private float ledgeGrabAcceleration;
 	[SerializeField] private float ledgeGrabMaxSpeed;
 
 	// These are katana related and are only used in the attack script but they're movement related so the values are set here
+	[Header("Katana Movement")]
 	[SerializeField] public float throwHeightBoost;
 	[SerializeField] public int throwTime;
 	[SerializeField] public float throwMomentumCancelMultiplier; // Backwards and neutral

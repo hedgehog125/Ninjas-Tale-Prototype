@@ -4,10 +4,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class playerAttack : MonoBehaviour {
+	[Header("Objects and Colliders")]
 	[SerializeField] private GameObject katana;
 	[SerializeField] private GameObject cameraObject;
 	[SerializeField] public BoxCollider2D canThrowCol; // Read by katana movement
 
+	[Header("Throwing")]
 	[SerializeField] private int maxThrowBufferTime;
 	[SerializeField] private float minThrowDistance;
 

@@ -5,22 +5,27 @@ using UnityEngine.InputSystem;
 
 public class katanaMovement : MonoBehaviour
 {
+	[Header("Objects")]
 	[SerializeField] private GameObject player;
 
+	[Header("Speeds")]
 	[SerializeField] private float maxSpeed;
 	[SerializeField] private float rotationSpeed;
 
-	[SerializeField] private float passedTargetMaintainance;
-	[SerializeField] private float holdSpeedMaintainance;
-
-	[SerializeField] private int maxAge;
-	[SerializeField] private int maxStuckTime;
-	[SerializeField] private int maxHoldTime;
-
+	[Header("Recall and Return Speeds")]
 	[SerializeField] private float returnAcceleration;
 	[SerializeField] private float recallAcceleration;
 	[SerializeField] private float recallBoost;
 	[SerializeField] private float maxReturnSpeed;
+
+	[Header("Maintainances")]
+	[SerializeField] private float passedTargetMaintainance;
+	[SerializeField] private float holdSpeedMaintainance;
+
+	[Header("Time Limits")]
+	[SerializeField] private int maxAge;
+	[SerializeField] private int maxStuckTime;
+	[SerializeField] private int maxHoldTime;
 
 
 	// Set by the player attack script

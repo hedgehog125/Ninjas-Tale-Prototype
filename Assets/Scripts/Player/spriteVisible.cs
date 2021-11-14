@@ -2,15 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class spriteVisible : MonoBehaviour
-{
+public class spriteVisible : MonoBehaviour {
+	[Header("Objects")]
     [SerializeField] private GameObject playerPhysics;
+
+	[Header("Stretching")]
     [SerializeField] private float stretchAmount;
     [SerializeField] private float maxStretch;
     [SerializeField] private float stretchMaintenance;
 	[SerializeField] private float stretchAcceleration;
 	[SerializeField] private float downwardsBias;
 
+	[Header("Walk Bobbing")]
 	[SerializeField] private float walkBobSpeed;
 	[SerializeField] private float walkBobAmount;
 

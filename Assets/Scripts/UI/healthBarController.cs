@@ -4,8 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class healthBarController : MonoBehaviour {
-	[SerializeField] private int maxHealth;
+	[Header("Images")]
 	[SerializeField] private Sprite[] heartImages;
+
+	[Header("")]
+	[SerializeField] private int maxHealth;
 
 	public int health {
 		set {
