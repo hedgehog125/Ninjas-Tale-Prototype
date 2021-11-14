@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 666917732887412458}
   - component: {fileID: 666917732887412457}
   m_Layer: 5
-  m_Name: Heart 1
+  m_Name: Heart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 75, y: 75}
+  m_SizeDelta: {x: 63, y: 56}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &666917732887412458
 CanvasRenderer:
@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 8012677903426701907, guid: 0ef58cd216c194faabe616bf66f8effb, type: 3}
+  m_Sprite: {fileID: 8522625820373494394, guid: 9acc2e191604ac54887b473af187a26b, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
