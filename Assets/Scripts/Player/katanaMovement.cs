@@ -24,10 +24,10 @@ public class katanaMovement : MonoBehaviour
 
 
 	// Set by the player attack script
-	public Vector2 target;
+	[HideInInspector] public Vector2 target;
 
 	// Read by it
-	public float heightOffset;
+	[HideInInspector] public float heightOffset;
 
 	private Rigidbody2D rb;
 	private BoxCollider2D col;

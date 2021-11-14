@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class playerAttack : MonoBehaviour
-{
+public class playerAttack : MonoBehaviour {
 	[SerializeField] private GameObject katana;
 	[SerializeField] private GameObject cameraObject;
 	[SerializeField] public BoxCollider2D canThrowCol; // Read by katana movement
@@ -20,15 +19,16 @@ public class playerAttack : MonoBehaviour
 	private LayerMask groundLayer;
 
 	// Read by player movement
-	public int throwTick;
-	public bool throwDirection;
+	[HideInInspector] public int throwTick { get; private set; }
+	[HideInInspector] public bool throwDirection { get; private set; }
 
 	// Read by katana
-	public Vector2 targetInput = new Vector2(0, 0);
-	public Vector2 moveInput;
-	public bool recallInput;
+	[HideInInspector] public Vector2 targetInput { get; private set; } = new Vector2(0, 0);
+	[HideInInspector] public Vector2 moveInput { get; private set; }
+	[HideInInspector] public bool recallInput { get; private set; }
+	[HideInInspector] public bool throwHoldInput { get; private set; } // Isn't set to false when katana is thrown
+
 	private bool throwInput;
-	public bool throwHoldInput; // Isn't set to false when katana is thrown
 
 
 	private int throwBufferTick;

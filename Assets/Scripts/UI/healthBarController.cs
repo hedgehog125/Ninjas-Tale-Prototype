@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class healthBarController : MonoBehaviour
-{
-	private int _health;
-	private Image[] hearts;
+public class healthBarController : MonoBehaviour {
+	[SerializeField] private int maxHealth;
+	[SerializeField] private Sprite[] heartImages;
 
-	public int maxHealth;
-	public Sprite[] heartImages;
 	public int health {
 		set {
 			int healthLeft = value;
@@ -32,8 +29,12 @@ public class healthBarController : MonoBehaviour
 			return _health;
 		}
 	}
-    void Awake()
-    {
+
+	private int _health;
+	private Image[] hearts;
+
+	
+    private void Awake() {
 		int count = transform.childCount;
 		hearts = new Image[count];
 		for (int i = 0; i < count; i++) {
@@ -42,10 +43,4 @@ public class healthBarController : MonoBehaviour
 
 		health = maxHealth; // Trigger update
 	}
-
-	// Update is called once per frame
-	void Update()
-    {
-        
-    }
 }

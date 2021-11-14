@@ -36,10 +36,10 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float ledgeGrabMaxSpeed;
 
 	// These are katana related and are only used in the attack script but they're movement related so the values are set here
-	public float throwHeightBoost;
-	public int throwTime;
-	public float throwMomentumCancelMultiplier; // Backwards and neutral
-	public float throwMomentumReduceMultiplier; // Forwards
+	[SerializeField] public float throwHeightBoost;
+	[SerializeField] public int throwTime;
+	[SerializeField] public float throwMomentumCancelMultiplier; // Backwards and neutral
+	[SerializeField] public float throwMomentumReduceMultiplier; // Forwards
 
 
 
@@ -47,23 +47,25 @@ public class playerMovement : MonoBehaviour {
 	private Collider2D col;
 	private BoxCollider2D ledgeCol;
 	private playerAttack attackScript;
+	private playerDamage damageScript;
+
 
 	// Needs to be read by the visual child and the player attack script
-	public float yAcceleration;
-	public bool moveInputNeutralX = true;
-	public bool moveInputNeutralY = true;
-	public bool wasOnWall;
-	public bool wasOnGround;
+	[HideInInspector] public float yAcceleration { get; private set; }
+	[HideInInspector] public bool moveInputNeutralX { get; private set; } = true;
+	[HideInInspector] public bool moveInputNeutralY { get; private set; } = true;
+	[HideInInspector] public bool wasOnWall { get; private set; }
+	[HideInInspector] public bool wasOnGround { get; private set; }
+	[HideInInspector] public int jumpHoldTick { get; private set; }
 
 	// Modified by visual child
-	public bool direction = true;
+	[HideInInspector] public bool direction = true;
 
 	private Vector2 moveInput;
 	private bool jumpInput;
 	private bool jumpBufferInput; // Set to false after jumping
 
 	private int coyoteTick;
-	public int jumpHoldTick;
 	private int jumpBufferTick;
 	private bool hasJumped;
 
@@ -110,6 +112,7 @@ public class playerMovement : MonoBehaviour {
 		ledgeCol.size = new Vector2(col.bounds.size.x, 0.1f);
 
 		attackScript = GetComponent<playerAttack>();
+		damageScript = GetComponent<playerDamage>();
 
 		normalGravity = rb.gravityScale;
 	}
@@ -333,6 +336,60 @@ public class playerMovement : MonoBehaviour {
 		}
     }
 
+	public void LedgeGrabStateTick(ref Vector2 vel) {
+		if (transform.position.y > ledgeGrabY) {
+			ledgeGrabStage = true;
+			rb.gravityScale = normalGravity;
+			transform.position = new Vector3(transform.position.x, ledgeGrabY);
+		}
+		if (ledgeGrabStage) {
+			if (ledgeGrabY - transform.position.y >= 2) { // Fail-safe
+				ledgeGrabbing = false;
+			}
+			vel.x = wallJumpDirection ? Mathf.Min(vel.x + (ledgeGrabAcceleration / 2), ledgeGrabMaxSpeed / 2) : Mathf.Max(vel.x - (ledgeGrabAcceleration / 2), -(ledgeGrabMaxSpeed / 2));
+			if (wallJumpDirection) {
+				if (transform.position.x > ledgeGrabX) {
+					ledgeGrabbing = false;
+				}
+			}
+			else {
+				if (transform.position.x < ledgeGrabX) {
+					ledgeGrabbing = false;
+				}
+			}
+		}
+		else {
+			vel.y = Mathf.Min(vel.y + ledgeGrabAcceleration, ledgeGrabMaxSpeed);
+		}
+	}
+	public void NormalStateTick(ref Vector2 vel, ref bool isOnGround, ref bool isOnWall, ref bool canLedgeGrab) {
+		bool turning = false;
+		if (moveInputNeutralX) {
+			if (isOnGround) {
+				vel.x *= neutralSpeedMaintenance;
+			}
+			else {
+				vel.x *= neutralAirSpeedMaintenance;
+			}
+		}
+		else if (direction != moveInput.x > 0 && Mathf.Abs(vel.x) > 1) {
+			turning = true;
+			if (isOnGround) {
+				vel.x *= turnSpeedMaintenance;
+			}
+		}
+
+		MoveTick(ref vel, isOnGround, ref isOnWall, turning);
+		if (! isOnWall) {
+			JumpTick(ref vel, isOnGround);
+		}
+		WallTick(ref vel, isOnGround, isOnWall, canLedgeGrab);
+
+		if ((! isOnWall) && wallJumpCoyoteTick < coyoteTime) {
+			wallJumpCoyoteTick++;
+		}
+	}
+
     private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 		yAcceleration = (vel - velWas).y;
@@ -343,57 +400,12 @@ public class playerMovement : MonoBehaviour {
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];
 
-		if (ledgeGrabbing) {
-			if (transform.position.y > ledgeGrabY) {
-				ledgeGrabStage = true;
-				rb.gravityScale = normalGravity;
-				transform.position = new Vector3(transform.position.x, ledgeGrabY);
-			}
-			if (ledgeGrabStage) {
-				if (ledgeGrabY - transform.position.y >= 2) { // Fail-safe
-					ledgeGrabbing = false;
-				}
-				vel.x = wallJumpDirection? Mathf.Min(vel.x + (ledgeGrabAcceleration / 2), ledgeGrabMaxSpeed / 2) : Mathf.Max(vel.x - (ledgeGrabAcceleration / 2), -(ledgeGrabMaxSpeed / 2));
-				if (wallJumpDirection) {
-					if (transform.position.x > ledgeGrabX) {
-						ledgeGrabbing = false;
-					}
-				}
-				else {
-					if (transform.position.x < ledgeGrabX) {
-						ledgeGrabbing = false;
-					}
-				}
+		if (damageScript.stunTick == 0) {
+			if (ledgeGrabbing) {
+				LedgeGrabStateTick(ref vel);
 			}
 			else {
-				vel.y = Mathf.Min(vel.y + ledgeGrabAcceleration, ledgeGrabMaxSpeed);
-			}
-		}
-		else {
-			bool turning = false;
-			if (moveInputNeutralX) {
-				if (isOnGround) {
-					vel.x *= neutralSpeedMaintenance;
-				}
-				else {
-					vel.x *= neutralAirSpeedMaintenance;
-				}
-			}
-			else if (direction != moveInput.x > 0 && Mathf.Abs(vel.x) > 1) {
-				turning = true;
-				if (isOnGround) {
-					vel.x *= turnSpeedMaintenance;
-                }
-			}
-
-			MoveTick(ref vel, isOnGround, ref isOnWall, turning);
-			if (! isOnWall) {
-				JumpTick(ref vel, isOnGround);
-			}
-			WallTick(ref vel, isOnGround, isOnWall, canLedgeGrab);
-
-			if ((! isOnWall) && wallJumpCoyoteTick < coyoteTime) {
-				wallJumpCoyoteTick++;
+				NormalStateTick(ref vel, ref isOnGround, ref isOnWall, ref canLedgeGrab);
 			}
 		}
 
@@ -401,6 +413,6 @@ public class playerMovement : MonoBehaviour {
 	}
 
 	public void LateUpdate() {
-		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction ? 0.25f : -0.25f), col.bounds.center.y + ledgeGrabDistance) - new Vector2(col.bounds.center.x, col.bounds.center.y);
+		ledgeCol.offset = new Vector2(Mathf.Round(col.bounds.center.x) + (direction? 0.25f : -0.25f), col.bounds.center.y + ledgeGrabDistance) - new Vector2(col.bounds.center.x, col.bounds.center.y);
 	}
 }
