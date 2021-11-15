@@ -47,6 +47,15 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] public float throwMomentumCancelMultiplier; // Backwards and neutral
 	[SerializeField] public float throwMomentumReduceMultiplier; // Forwards
 
+	[Header("Melee Movement")]
+	[SerializeField] public float meleeAirXBoost;
+	[SerializeField] public float meleeAirYBoost;
+	[SerializeField] public float meleeGroundBoost;
+	[SerializeField] public float meleeInitialAirBoostMultiplier;
+	[SerializeField] public float meleeInitialGroundBoostMultiplier;
+	[SerializeField] public int meleeBoostTime;
+	[SerializeField] public int meleeTime;
+
 
 
 	private Rigidbody2D rb;
@@ -142,6 +151,7 @@ public class playerMovement : MonoBehaviour {
 			wallJumpCoyoteTick = coyoteTime;
 			return outputs;
 		}
+		if (attackScript.meleeTick != 0) return outputs;
 		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
 		if (raycastCenter.collider == null) return outputs;
 
@@ -241,6 +251,10 @@ public class playerMovement : MonoBehaviour {
 			xInput = wallJumpDirection? -1 : 1;
 			wallJumpPreventBackwardsTick--;
 		}
+
+		if (attackScript.meleeTick != 0) {
+			canMove = false;
+        }
 
 
 		if (canMove) {
@@ -370,7 +384,7 @@ public class playerMovement : MonoBehaviour {
 	}
 	public void NormalStateTick(ref Vector2 vel, ref bool isOnGround, ref bool isOnWall, ref bool canLedgeGrab) {
 		bool turning = false;
-		if (moveInputNeutralX) {
+		if (moveInputNeutralX && attackScript.meleeTick == 0) {
 			if (isOnGround) {
 				vel.x *= neutralSpeedMaintenance;
 			}
@@ -414,8 +428,13 @@ public class playerMovement : MonoBehaviour {
 				NormalStateTick(ref vel, ref isOnGround, ref isOnWall, ref canLedgeGrab);
 			}
 		}
-
-		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
+		
+		if (attackScript.meleeTick == 0) {
+			rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
+        }
+		else {
+			rb.velocity = vel;
+        }
 	}
 
 	public void LateUpdate() {

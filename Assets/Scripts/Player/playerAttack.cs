@@ -13,6 +13,7 @@ public class playerAttack : MonoBehaviour {
 	[SerializeField] private int maxThrowBufferTime;
 	[SerializeField] private float minThrowDistance;
 
+
 	private playerMovement moveScript;
 	private Rigidbody2D rb;
 	private BoxCollider2D col;
@@ -23,6 +24,7 @@ public class playerAttack : MonoBehaviour {
 	// Read by player movement
 	[HideInInspector] public int throwTick { get; private set; }
 	[HideInInspector] public bool throwDirection { get; private set; }
+	[HideInInspector] public int meleeTick { get; private set; } // And by enemies
 
 	// Read by katana
 	[HideInInspector] public Vector2 targetInput { get; private set; } = new Vector2(0, 0);
@@ -31,10 +33,12 @@ public class playerAttack : MonoBehaviour {
 	[HideInInspector] public bool throwHoldInput { get; private set; } // Isn't set to false when katana is thrown
 
 	private bool throwInput;
+	private bool meleeInput;
 
 
 	private int throwBufferTick;
 	private bool thrownSinceGround;
+	private bool attackedSinceGround;
 	private bool getHeight;
 
 
@@ -54,6 +58,9 @@ public class playerAttack : MonoBehaviour {
 	private void OnMove(InputValue input) {
 		moveInput = input.Get<Vector2>();
 	}
+	private void OnMelee(InputValue input) {
+		meleeInput = input.isPressed;
+	}
 
 	private void Awake() {
 		moveScript = GetComponent<playerMovement>();
@@ -70,13 +77,7 @@ public class playerAttack : MonoBehaviour {
 		canThrowCol.offset = new Vector2(0, katanaScript.heightOffset);
 	}
 
-	private void FixedUpdate() {
-		Vector2 vel = rb.velocity;
-
-		if (moveScript.wasOnGround || moveScript.wasOnWall) {
-			thrownSinceGround = false;
-		}
-
+	private void KatanaThrowTick(ref Vector2 vel) {
 		if (throwTick == 0) {
 			if (throwInput || (throwBufferTick != 0 && throwBufferTick < maxThrowBufferTime)) {
 				if (katana.activeSelf) { // Already thrown, attempt to buffer
@@ -94,7 +95,7 @@ public class playerAttack : MonoBehaviour {
 
 					moveScript.direction = target.x > transform.position.x;
 					if (! canThrowCol.IsTouchingLayers(groundLayer)) {
-						RaycastHit2D raycast = Physics2D.BoxCast(canThrowCol.bounds.center, canThrowCol.bounds.size, 0, moveScript.direction? Vector2.right : Vector2.left, (minThrowDistance + ((col.size.x + canThrowCol.size.x) / 2)) - 0.05f, groundLayer);
+						RaycastHit2D raycast = Physics2D.BoxCast(canThrowCol.bounds.center, canThrowCol.bounds.size, 0, moveScript.direction ? Vector2.right : Vector2.left, (minThrowDistance + ((col.size.x + canThrowCol.size.x) / 2)) - 0.05f, groundLayer);
 						if (raycast.collider == null) {
 							if (target.x > transform.position.x) {
 								if (target.x < canThrowCol.bounds.center.x + (canThrowCol.bounds.size.x / 2) + minThrowDistance) {
@@ -110,7 +111,7 @@ public class playerAttack : MonoBehaviour {
 
 
 							if (moveScript.moveInputNeutralX || katanaScript.target.x > transform.position.x != directionWas) {
-								vel.x *= moveScript.throwMomentumCancelMultiplier * (moveScript.moveInputNeutralX? 1 : -1);
+								vel.x *= moveScript.throwMomentumCancelMultiplier * (moveScript.moveInputNeutralX ? 1 : -1);
 							}
 							else {
 								vel.x *= moveScript.throwMomentumReduceMultiplier;
@@ -145,7 +146,7 @@ public class playerAttack : MonoBehaviour {
 		}
 		if (throwTick != 0) {
 			if (getHeight) {
-				if (!moveScript.wasOnGround) {
+				if (! moveScript.wasOnGround) {
 					vel.y += moveScript.throwHeightBoost;
 				}
 			}
@@ -157,6 +158,52 @@ public class playerAttack : MonoBehaviour {
 				throwTick++;
 			}
 		}
+	}
+
+	private void MeleeAttackTick(ref Vector2 vel) { // Smash Melee reference? :0
+		if (meleeTick == 0) {
+			if (meleeInput) {
+				if (! (moveScript.wasOnWall || attackedSinceGround)) {
+					if (moveScript.wasOnGround) {
+						vel.x = (moveScript.direction? moveScript.meleeGroundBoost : -moveScript.meleeGroundBoost) * moveScript.meleeInitialGroundBoostMultiplier;
+					}
+					else {
+						vel.x = (moveScript.direction? moveScript.meleeAirXBoost : -moveScript.meleeAirXBoost) * moveScript.meleeInitialAirBoostMultiplier;
+						vel.y = moveScript.meleeAirYBoost * moveScript.meleeInitialAirBoostMultiplier;
+					}
+					attackedSinceGround = true;
+					meleeTick = 1;
+					meleeInput = false;
+				}
+			}
+		}
+		else {
+			if (meleeTick < moveScript.meleeBoostTime) {
+				if (moveScript.wasOnGround) {
+					vel.x = (moveScript.direction? moveScript.meleeGroundBoost : -moveScript.meleeGroundBoost) * moveScript.meleeInitialGroundBoostMultiplier;
+				}
+				else {
+					vel.x += moveScript.direction? moveScript.meleeAirXBoost : -moveScript.meleeAirXBoost;
+					vel.y += moveScript.meleeAirYBoost;
+				}
+			}
+			if (meleeTick == moveScript.meleeTime) {
+				meleeTick = 0;
+            }
+			else {
+				meleeTick++;
+            }
+        }
+    }
+	private void FixedUpdate() {
+		Vector2 vel = rb.velocity;
+
+		if (moveScript.wasOnGround || moveScript.wasOnWall) {
+			thrownSinceGround = false;
+			attackedSinceGround = false;
+		}
+		KatanaThrowTick(ref vel);
+		MeleeAttackTick(ref vel);
 
 		rb.velocity = vel;
 	}
