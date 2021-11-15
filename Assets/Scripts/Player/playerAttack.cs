@@ -187,6 +187,9 @@ public class playerAttack : MonoBehaviour {
 					vel.y += moveScript.meleeAirYBoost;
 				}
 			}
+			else {
+				vel.x *= moveScript.meleeAfterBoosMaintainance;
+			}
 			if (meleeTick == moveScript.meleeTime) {
 				meleeTick = 0;
             }

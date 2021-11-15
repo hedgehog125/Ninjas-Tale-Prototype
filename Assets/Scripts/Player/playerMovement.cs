@@ -54,6 +54,7 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] public float meleeInitialAirBoostMultiplier;
 	[SerializeField] public float meleeInitialGroundBoostMultiplier;
 	[SerializeField] public int meleeBoostTime;
+	[SerializeField] public float meleeAfterBoosMaintainance;
 	[SerializeField] public int meleeTime;
 
 
