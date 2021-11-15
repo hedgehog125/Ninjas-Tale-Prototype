@@ -41,6 +41,8 @@ public class playerAttack : MonoBehaviour {
 	private bool attackedSinceGround;
 	private bool getHeight;
 
+	private bool punching;
+
 
 	private void OnThrow(InputValue input) {
 		throwInput = input.isPressed;
@@ -180,8 +182,14 @@ public class playerAttack : MonoBehaviour {
 					meleeTick = 1;
 					meleeInput = false;
 
-					katanaScript.throwing = false;
-					katanaScript.MultipleStart();
+					punching = katana.activeSelf;
+					if (punching) {
+						Debug.Log("TODO");
+					}
+					else {
+						katanaScript.throwing = false;
+						katanaScript.MultipleStart();
+					}
 				}
 			}
 		}
