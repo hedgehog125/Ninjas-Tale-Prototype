@@ -7,10 +7,12 @@ public class katanaMovement : MonoBehaviour
 {
 	[Header("Objects")]
 	[SerializeField] private GameObject player;
+	[SerializeField] private GameObject childLight;
 
 	[Header("Speeds")]
 	[SerializeField] private float maxSpeed;
 	[SerializeField] private float rotationSpeed;
+	[SerializeField] private float meleeMoveSpeed;
 
 	[Header("Recall and Return Speeds")]
 	[SerializeField] private float returnAcceleration;
@@ -30,12 +32,17 @@ public class katanaMovement : MonoBehaviour
 
 	// Set by the player attack script
 	[HideInInspector] public Vector2 target;
+	[HideInInspector] public bool throwing;
 
 	// Read by it
-	[HideInInspector] public float heightOffset;
+	[Header("")]
+	[SerializeField] public float heightOffset;
+	[SerializeField] public float holdHeightOffset;
 
 	private Rigidbody2D rb;
 	private BoxCollider2D col;
+	private SpriteRenderer ren;
+
 	private BoxCollider2D playerCol;
 	private playerMovement playerScript;
 	private playerAttack attackScript;
@@ -58,18 +65,34 @@ public class katanaMovement : MonoBehaviour
 	private Vector2 GetOffset() {
 		return new Vector2(((playerCol.size.x + col.size.x) / 2) * (playerScript.direction? 1 : -1), heightOffset);
 	}
+	private void MeleePosition() {
+		transform.rotation = Quaternion.identity; // Reset the rotation
+		if (playerScript.direction) {
+			transform.Rotate(new Vector3(0, 0, -135));
+			ren.flipX = true;
+		}
+		else {
+			transform.Rotate(new Vector3(0, 0, 135));
+			ren.flipX = false;
+		}
+
+		transform.position = (Vector2)player.transform.position + new Vector2((((playerCol.size.x + col.bounds.size.x) / 2) + (attackScript.meleeTick * meleeMoveSpeed)) * (playerScript.direction? 1 : -1), holdHeightOffset);
+	}
 
 	private void OnTriggerEnter2D(Collider2D collision) {
-		if (hasPassedTarget) {
-			if (collision.gameObject.CompareTag("PlayerCollectSmall")) {
-				gameObject.SetActive(false);
-            }
-        }
+		if (throwing) {
+			if (hasPassedTarget) {
+				if (collision.gameObject.CompareTag("PlayerCollectSmall")) {
+					gameObject.SetActive(false);
+				}
+			}
+		}	
 	}
 
     private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<BoxCollider2D>();
+		ren = GetComponent<SpriteRenderer>();
 
 		playerCol = player.GetComponent<BoxCollider2D>();
 		playerScript = player.GetComponent<playerMovement>();
@@ -81,33 +104,41 @@ public class katanaMovement : MonoBehaviour
 		Vector2 position = (Vector2)player.transform.position + GetOffset();
 		transform.position = position;
 		lastPosition = position - new Vector2(100, 100); // Don't trigger the hit detection on the first frame
-
-		Vector2 distance = target - position;
-		Vector2 signs = new Vector2(Mathf.Sign(distance.x), Mathf.Sign(distance.y));
-		float ratio = Mathf.Abs(distance.x) / Mathf.Abs(distance.y);
-
-		if (ratio > 1) {
-			speed.x = maxSpeed;
-			speed.y = maxSpeed / ratio;
-		}
-		else {
-			speed.x = maxSpeed * ratio;
-			speed.y = maxSpeed;
-		}
-		speed *= signs;
 		transform.rotation = Quaternion.identity; // Reset the rotation
 
+		if (throwing) {
+			Vector2 distance = target - position;
+			Vector2 signs = new Vector2(Mathf.Sign(distance.x), Mathf.Sign(distance.y));
+			float ratio = Mathf.Abs(distance.x) / Mathf.Abs(distance.y);
 
-		hasPassedTarget = false;
-		recalling = false;
-		returning = false;
-		age = 0;
-		stuckTick = 0;
-		holdTick = 0;
-		spinDirection = Random.Range(0, 2) == 0;
+			if (ratio > 1) {
+				speed.x = maxSpeed;
+				speed.y = maxSpeed / ratio;
+			}
+			else {
+				speed.x = maxSpeed * ratio;
+				speed.y = maxSpeed;
+			}
+			speed *= signs;
+
+			ren.flipX = false;
+			
+			hasPassedTarget = false;
+			recalling = false;
+			returning = false;
+			age = 0;
+			stuckTick = 0;
+			holdTick = 0;
+			spinDirection = Random.Range(0, 2) == 0;
+			childLight.SetActive(true);
+		}
+		else {
+			MeleePosition();
+			childLight.SetActive(false);
+		}
 	}
 
-	private void FixedUpdate() {
+	private void ThrowTick() {
 		Vector2 position2 = transform.position;
 
 		if (Mathf.Abs(Vector2.Distance(position2, lastPosition)) < 0.1f && ((! hasPassedTarget) || returning)) {
@@ -202,7 +233,7 @@ public class katanaMovement : MonoBehaviour
 				if (Mathf.Abs(speed.magnitude) < 0.025f) {
 					speed *= 0;
 					hasPassedTarget = true;
-                }
+				}
 			}
 			rb.velocity = speed;
 		}
@@ -212,7 +243,7 @@ public class katanaMovement : MonoBehaviour
 			Vector2 size = attackScript.canThrowCol.bounds.size;
 
 			float distance = (size.x / 2) + 1.45f;
-			Vector2Int direction = playerScript.direction? Vector2Int.right : Vector2Int.left;
+			Vector2Int direction = playerScript.direction ? Vector2Int.right : Vector2Int.left;
 
 			RaycastHit2D raycast = Physics2D.BoxCast(center, size, 0, direction, distance, playerScript.groundLayer);
 			if (raycast.collider == null || raycast.distance > col.bounds.size.x / 2) {
@@ -229,9 +260,24 @@ public class katanaMovement : MonoBehaviour
 			else {
 				gameObject.SetActive(false);
 			}
-			
-		}
 
-		rb.angularVelocity = Mathf.Abs(speed.magnitude) * (spinDirection? rotationSpeed : -rotationSpeed);
+		}
+	}
+	private void MeleeTick() {
+		MeleePosition();
+
+		if (attackScript.meleeTick == playerScript.meleeStopTime) {
+			gameObject.SetActive(false);
+		}
+	}
+
+	private void FixedUpdate() {
+		if (throwing) {
+			ThrowTick();
+			rb.angularVelocity = Mathf.Abs(speed.magnitude) * (spinDirection ? rotationSpeed : -rotationSpeed);
+		}
+		else {
+			MeleeTick();
+		}
 	}
 }

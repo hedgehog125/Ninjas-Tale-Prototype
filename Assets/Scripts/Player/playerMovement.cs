@@ -20,7 +20,7 @@ public class playerMovement : MonoBehaviour {
 
 
 	[Header("Jumping")]
-	[SerializeField] private int coyoteTime;
+	[SerializeField] public int coyoteTime; // Read by player attack script
 	[SerializeField] private int maxJumpHoldTime;
 	[SerializeField] private int maxJumpBufferTime;
 	[SerializeField] private float jumpPower;
@@ -54,8 +54,8 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] public float meleeInitialAirBoostMultiplier;
 	[SerializeField] public float meleeInitialGroundBoostMultiplier;
 	[SerializeField] public int meleeBoostTime;
-	[SerializeField] public float meleeAfterBoosMaintainance;
-	[SerializeField] public int meleeTime;
+	[SerializeField] public float meleeAfterBoostMaintainance;
+	[SerializeField] public int meleeStopTime;
 
 
 
@@ -81,7 +81,7 @@ public class playerMovement : MonoBehaviour {
 	private bool jumpInput;
 	private bool jumpBufferInput; // Set to false after jumping
 
-	private int coyoteTick;
+	[HideInInspector] public int coyoteTick; // Modified by attack script
 	private int jumpBufferTick;
 	private bool hasJumped;
 
@@ -91,7 +91,7 @@ public class playerMovement : MonoBehaviour {
 	private bool wallJumpDirection;
 	private bool hasWallJumped;
 	private float wallJumpHeight;
-	private int wallJumpCoyoteTick;
+	[HideInInspector] public int wallJumpCoyoteTick; // Modified by attack script
 	private bool wallJumpPendingDirection;
 	private int wallJumpPreventBackwardsTick;
 
@@ -304,6 +304,9 @@ public class playerMovement : MonoBehaviour {
 					jumpBufferTick++;
                 }
 			}
+		}
+		else if ((! isOnGround) && jumpHoldTick != 0) {
+			jumpHoldTick = maxJumpHoldTime; // The boost doesn't apply to any extra hold frames
 		}
 	}
 	private void WallTick(ref Vector2 vel, bool isOnGround, bool isOnWall, bool canLedgeGrab) {

@@ -24,7 +24,7 @@ public class playerAttack : MonoBehaviour {
 	// Read by player movement
 	[HideInInspector] public int throwTick { get; private set; }
 	[HideInInspector] public bool throwDirection { get; private set; }
-	[HideInInspector] public int meleeTick { get; private set; } // And by enemies
+	[HideInInspector] public int meleeTick { get; private set; } // And by enemies and the katana
 
 	// Read by katana
 	[HideInInspector] public Vector2 targetInput { get; private set; } = new Vector2(0, 0);
@@ -128,9 +128,14 @@ public class playerAttack : MonoBehaviour {
 							throwTick = 1;
 							throwDirection = moveScript.direction;
 							thrown = true;
-							getHeight = ! thrownSinceGround;
+							getHeight = (! thrownSinceGround) && moveScript.wasOnGround;
 							thrownSinceGround = true;
+							if (! moveScript.wasOnGround) {
+								moveScript.coyoteTick = moveScript.coyoteTime;
+								moveScript.wallJumpCoyoteTick = moveScript.coyoteTime;
+							}
 
+							katanaScript.throwing = true;
 							katanaScript.MultipleStart();
 						}
 					}
@@ -174,6 +179,9 @@ public class playerAttack : MonoBehaviour {
 					attackedSinceGround = true;
 					meleeTick = 1;
 					meleeInput = false;
+
+					katanaScript.throwing = false;
+					katanaScript.MultipleStart();
 				}
 			}
 		}
@@ -188,9 +196,9 @@ public class playerAttack : MonoBehaviour {
 				}
 			}
 			else {
-				vel.x *= moveScript.meleeAfterBoosMaintainance;
+				vel.x *= moveScript.meleeAfterBoostMaintainance;
 			}
-			if (meleeTick == moveScript.meleeTime) {
+			if (meleeTick == moveScript.meleeStopTime) {
 				meleeTick = 0;
             }
 			else {
