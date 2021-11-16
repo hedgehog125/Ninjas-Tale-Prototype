@@ -130,7 +130,7 @@ public class playerAttack : MonoBehaviour {
 							throwTick = 1;
 							throwDirection = moveScript.direction;
 							thrown = true;
-							getHeight = (! thrownSinceGround) && moveScript.wasOnGround;
+							getHeight = ! (thrownSinceGround || moveScript.wasOnGround);
 							thrownSinceGround = true;
 							if (! moveScript.wasOnGround) {
 								moveScript.coyoteTick = moveScript.coyoteTime;
