@@ -8,6 +8,7 @@ TagManager:
   - PlayerMain
   - PlayerCollectSmall
   - Katana
+  - LightOverride
   layers:
   - Default
   - TransparentFX
@@ -17,9 +18,9 @@ TagManager:
   - UI
   - Katana
   - Player
-  - 
-  - 
-  - 
+  - Light
+  - LightSource
+  - LightDetector
   - 
   - 
   - 
