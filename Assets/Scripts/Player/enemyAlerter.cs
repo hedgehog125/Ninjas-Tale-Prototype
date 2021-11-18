@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class enemyAlerter : MonoBehaviour {
     [Header("Objects and Layers")]
-    [SerializeField] private BoxCollider2D inLightTester;
+    [SerializeField] private GameObject inLightTester;
     [SerializeField] private playerInLightDetector inLightScript;
 
     [SerializeField] private LayerMask lightLayer;
     [SerializeField] private LayerMask lightSourceLayer;
 
+	private BoxCollider2D inLightCol;
     private playerMovement moveScript;
     private LayerMask groundLayer;
 
@@ -19,31 +20,38 @@ public class enemyAlerter : MonoBehaviour {
     // TODO: use physics layer masks and ontrigger enter
 
     private void Awake() {
-        moveScript = GetComponent<playerMovement>();
+		inLightCol = inLightScript.GetComponent<BoxCollider2D>();
+		moveScript = GetComponent<playerMovement>();
         groundLayer = moveScript.groundLayer;
-        inLightOffset = Mathf.Abs(inLightTester.offset.x);
+
+
+        inLightOffset = Mathf.Abs(inLightCol.offset.x);
     }
 
     private void FixedUpdate() {
-        bool inLight = false;
-        foreach (GameObject light in inLightScript.inLightAreas) {
-            Vector2 distance = light.transform.position - transform.position;
+        bool isInLight = false;
+        foreach (GameObject currentLight in inLightScript.inLightAreas) {
+            Vector2 distance = currentLight.transform.position - transform.position;
             Vector2 direction = distance.normalized;
 
             RaycastHit2D hit = Physics2D.Raycast(inLightTester.transform.position, direction, distance.magnitude + 0.05f, moveScript.groundLayer);
+			if (hit.collider == null) {
+				isInLight = true;
+				break;
+			}
         }
-        if (inLight) {
+        if (isInLight) {
             Debug.Log("A");
         }
     }
     private void LateUpdate() {
-        Vector2 offset = inLightTester.offset;
+        Vector2 offset = inLightCol.offset;
         if (moveScript.direction) {
             offset.x = inLightOffset;
         }
         else {
             offset.x = -inLightOffset;
         }
-        inLightTester.offset = offset;
+		inLightCol.offset = offset;
     }
 }
