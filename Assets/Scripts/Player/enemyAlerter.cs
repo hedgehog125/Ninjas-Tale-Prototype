@@ -7,50 +7,56 @@ public class enemyAlerter : MonoBehaviour {
     [SerializeField] private GameObject inLightTester;
     [SerializeField] private playerInLightDetector inLightScript;
 
-    [SerializeField] private LayerMask lightLayer;
-    [SerializeField] private LayerMask lightSourceLayer;
+	[Header("Raycasting")]
+	[SerializeField] private float topCast;
+	[SerializeField] private float bottomCast;
+
+
+	[HideInInspector] public bool inLight { get; private set; }
 
 	private BoxCollider2D inLightCol;
     private playerMovement moveScript;
-    private LayerMask groundLayer;
 
-    private bool inLight;
     private float inLightOffset;
-
-    // TODO: use physics layer masks and ontrigger enter
 
     private void Awake() {
 		inLightCol = inLightScript.GetComponent<BoxCollider2D>();
 		moveScript = GetComponent<playerMovement>();
-        groundLayer = moveScript.groundLayer;
 
 
         inLightOffset = Mathf.Abs(inLightCol.offset.x);
     }
 
     private void FixedUpdate() {
-        bool isInLight = false;
+		inLight = false;
         foreach (GameObject currentLight in inLightScript.inLightAreas) {
             Vector2 distance = currentLight.transform.position - transform.position;
             Vector2 direction = distance.normalized;
 
-            RaycastHit2D hit = Physics2D.Raycast(inLightTester.transform.position, direction, distance.magnitude + 0.05f, moveScript.groundLayer);
+			Vector2 center = inLightTester.transform.position;
+			Vector2 position = center;
+			position.y += topCast;
+			RaycastHit2D hit = Physics2D.Raycast(position, direction, distance.magnitude + 0.05f, moveScript.groundLayer);
 			if (hit.collider == null) {
-				isInLight = true;
+				inLight = true;
 				break;
 			}
-        }
-        if (isInLight) {
-            Debug.Log("A");
-        }
+
+			position.y = center.y + bottomCast;
+			hit = Physics2D.Raycast(position, direction, distance.magnitude + 0.05f, moveScript.groundLayer);
+			if (hit.collider == null) {
+				inLight = true;
+				break;
+			}
+		}
     }
     private void LateUpdate() {
         Vector2 offset = inLightCol.offset;
         if (moveScript.direction) {
-            offset.x = inLightOffset;
+            offset.x = -inLightOffset;
         }
         else {
-            offset.x = -inLightOffset;
+            offset.x = inLightOffset;
         }
 		inLightCol.offset = offset;
     }

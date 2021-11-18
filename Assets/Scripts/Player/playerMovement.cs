@@ -228,7 +228,7 @@ public class playerMovement : MonoBehaviour {
 				moveInputNeutralY = true;
 				moveInput.y = 0;
 			}
-			else {
+			else if (moveInput.y < 0) {
 				vel.y -= downFallBoost;
 			}
 		}
