@@ -4,19 +4,20 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering.Universal;
 
 public class nightVisionController : MonoBehaviour {
-    [SerializeField] private nightVisionGoggles controller;
     [SerializeField] private bool isSky;
 
 
     private Light2D myLight;
     private SpriteRenderer ren;
+	private nightVisionGoggles controller;
 
-    private string lightType;
+	private string lightType;
     private bool activeWas;
     private Color darkColor;
     private float darkIntensity;
 
     private void Awake() {
+		controller = GameObject.Find("Player").GetComponent<nightVisionGoggles>();
         if (isSky) {
             ren = GetComponent<SpriteRenderer>();
             darkColor = ren.color;

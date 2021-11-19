@@ -12,12 +12,11 @@ public class enemyMovement : MonoBehaviour {
 	[SerializeField] private float stopMaintainance;
 	[SerializeField] private float maxSpeed;
 
+	[HideInInspector] public bool direction { get; private set; } // Read by enemy visible script
 
 	private Rigidbody2D rb;
-	private SpriteRenderer ren;
 
 	private int currentPoint;
-	private bool direction;
 	private int delayTick;
 
 
@@ -30,7 +29,6 @@ public class enemyMovement : MonoBehaviour {
 
     private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
-		ren = GetComponent<SpriteRenderer>();
     }
 
     private void Start() {
@@ -39,7 +37,6 @@ public class enemyMovement : MonoBehaviour {
 			currentPoint = 1;
 			Vector2 nextPoint = patrolPath[currentPoint] + new Vector2(0.5f, 0.25f);
 			direction = nextPoint.x > transform.position.x;
-			ren.flipX = ! direction;
 		}
 	}
 
@@ -79,7 +76,6 @@ public class enemyMovement : MonoBehaviour {
 						currentPoint = 0;
                     }
 					direction = patrolPath[currentPoint].x > transform.position.x;
-					ren.flipX = ! direction;
 				}
 				else {
 					delayTick++;
