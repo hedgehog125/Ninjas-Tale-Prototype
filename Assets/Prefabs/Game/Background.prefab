@@ -95,5 +95,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae76119d3c5c50248aa79e61e3e8c0e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controller: {fileID: 0}
   isSky: 1

@@ -28,12 +28,15 @@ public class enemyMovement : MonoBehaviour {
 	[HideInInspector] public bool direction { get; private set; } // Read by enemy visible script
 
 	private Rigidbody2D rb;
+	private BoxCollider2D col;
+
 	private enemyAlerter alertScript;
 	private playerConeDetector coneScript;
 
 	private int currentPoint;
 	private int playerTouching;
 	private Vector2 knownPlayerPosition;
+	private Vector2 lastPosition;
 
 	private int delayTick;
 	private float spotTick;
@@ -59,6 +62,8 @@ public class enemyMovement : MonoBehaviour {
 
     private void Awake() {
 		rb = GetComponent<Rigidbody2D>();
+		col = GetComponent<BoxCollider2D>();
+
 		alertScript = playerObject.GetComponent<enemyAlerter>();
 		coneScript = visionCone.GetComponent<playerConeDetector>();
     }
@@ -74,30 +79,15 @@ public class enemyMovement : MonoBehaviour {
 
 	private void DefaultState(ref Vector2 vel) {
 		if (patrolPath.Count >= 2) {
-			if (spotTick == 0) {
+			if (spotTick > 0) {
+				vel.x *= stopMaintainance;
+			}
+			else {
 				if (delayTick == 0) {
 					Vector2 nextPoint = patrolPath[currentPoint] + new Vector2(0.5f, 0.25f);
-
-					if (nextPoint.x > transform.position.x) {
-						if (direction) {
-							vel.x += acceleration;
-						}
-						else { // Passed it
-							vel.x *= stopMaintainance;
-							if (Mathf.Abs(vel.x) < 0.1f) {
-								delayTick = 1;
-							}
-						}
-					}
-					else {
-						if (direction) { // Passed it
-							vel.x *= stopMaintainance;
-							if (Mathf.Abs(vel.x) < 0.1f) {
-								delayTick = 1;
-							}
-						}
-						else {
-							vel.x -= acceleration;
+					if (MoveTick(ref vel, nextPoint)) { // Passed target
+						if (Mathf.Abs(vel.x) < 0.1f) {
+							delayTick = 1;
 						}
 					}
 				}
@@ -114,9 +104,6 @@ public class enemyMovement : MonoBehaviour {
 						delayTick++;
 					}
 				}
-			}
-			else {
-				vel.x *= stopMaintainance;
 			}
 		}
     }
@@ -147,10 +134,52 @@ public class enemyMovement : MonoBehaviour {
 			if (spotTick < 0) spotTick = 0;
 		}
 	}
+
+	private void AttackState(ref Vector2 vel) {
+		direction = knownPlayerPosition.x > transform.position.x;
+
+		if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.01f) {
+			Vector2 center = col.bounds.center;
+			Vector2 size = col.bounds.size;
+			size.x -= 0.05f;
+			size.y = 0.1f;
+			center.y += 0.05f - (col.bounds.size.y / 2);
+
+			RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.02f, groundLayer);
+			if (hit.collider != null) {
+ 				vel.y += jumpHeight;
+			}
+		}
+		lastPosition = transform.position;
+		MoveTick(ref vel, knownPlayerPosition);
+	}
+
 	private void Spotted(ref Vector2 vel) {
 		spotTick = 0;
 		state = States.Attacking;
 		vel.y += jumpHeight;
+		lastPosition = transform.position;
+	}
+	private bool MoveTick(ref Vector2 vel, Vector2 target) {
+		if (target.x > transform.position.x) {
+			if (direction) {
+				vel.x += acceleration;
+			}
+			else { // Passed it
+				vel.x *= stopMaintainance;
+				return true;
+			}
+		}
+		else {
+			if (direction) { // Passed it
+				vel.x *= stopMaintainance;
+				return true;
+			}
+			else {
+				vel.x -= acceleration;
+			}
+		}
+		return false;
 	}
 
     private void FixedUpdate() {
@@ -158,6 +187,9 @@ public class enemyMovement : MonoBehaviour {
         if (state == States.Default) {
 			DefaultState(ref vel);
 			DetectPlayer(ref vel);
+		}
+		else if (state == States.Attacking) {
+			AttackState(ref vel);
 		}
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxSpeed) * Mathf.Sign(vel.x), vel.y);
