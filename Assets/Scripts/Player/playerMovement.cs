@@ -99,6 +99,7 @@ public class playerMovement : MonoBehaviour {
 	private float ledgeGrabX;
 	private float ledgeGrabY;
 	private bool ledgeGrabStage;
+	private int ledgeGrabTick;
 
 	private float normalGravity;
 	private Vector2 velWas;
@@ -343,6 +344,7 @@ public class playerMovement : MonoBehaviour {
 				if (canLedgeGrab) {
 					ledgeGrabbing = true;
 					ledgeGrabStage = false;
+					ledgeGrabTick = 0;
 					rb.gravityScale = 0;
 
 					vel.x = 0;
@@ -367,10 +369,11 @@ public class playerMovement : MonoBehaviour {
 			transform.position = new Vector3(transform.position.x, ledgeGrabY);
 		}
 		if (ledgeGrabStage) {
-			if (ledgeGrabY - transform.position.y >= 2) { // Fail-safe
+			ledgeGrabTick++;
+			if (ledgeGrabY - transform.position.y >= 2 || ledgeGrabTick == 150) { // Fail-safe
 				ledgeGrabbing = false;
 			}
-			vel.x = wallJumpDirection ? Mathf.Min(vel.x + (ledgeGrabAcceleration / 2), ledgeGrabMaxSpeed / 2) : Mathf.Max(vel.x - (ledgeGrabAcceleration / 2), -(ledgeGrabMaxSpeed / 2));
+			vel.x = wallJumpDirection? Mathf.Min(vel.x + (ledgeGrabAcceleration / 2), ledgeGrabMaxSpeed / 2) : Mathf.Max(vel.x - (ledgeGrabAcceleration / 2), -(ledgeGrabMaxSpeed / 2));
 			if (wallJumpDirection) {
 				if (transform.position.x > ledgeGrabX) {
 					ledgeGrabbing = false;

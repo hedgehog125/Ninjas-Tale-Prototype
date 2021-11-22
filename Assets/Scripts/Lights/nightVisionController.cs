@@ -11,13 +11,15 @@ public class nightVisionController : MonoBehaviour {
     private SpriteRenderer ren;
 	private nightVisionGoggles controller;
 
-	private string lightType;
+    private string lightType;
     private bool activeWas;
     private Color darkColor;
     private float darkIntensity;
 
     private void Awake() {
 		controller = GameObject.Find("Player").GetComponent<nightVisionGoggles>();
+
+
         if (isSky) {
             ren = GetComponent<SpriteRenderer>();
             darkColor = ren.color;
@@ -51,6 +53,9 @@ public class nightVisionController : MonoBehaviour {
                 }
             }
             activeWas = controller.active;
+        }
+        if (! (controller.active || lightType == "Global" || isSky)) {
+            myLight.intensity = darkIntensity + controller.physicalLightAdd;
         }
     }
 }

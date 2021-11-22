@@ -36,6 +36,8 @@ public class nightVisionGoggles : MonoBehaviour {
 
 	[HideInInspector] public bool active; // Set by animation script
 
+	[HideInInspector] public float physicalLightAdd { get; private set; }
+
 	private float originalMinLightObjects;
 	private float originalMinLightSky;
 
@@ -75,14 +77,17 @@ public class nightVisionGoggles : MonoBehaviour {
 		if (active) {
 			minLightObjects.intensity = originalMinLightObjects;
 			minLightSky.intensity = originalMinLightSky;
+			physicalLightAdd = 0;
 		}
 		else {
 			if (alertScript.inLight) {
 				ren.sprite = lightImage;
 
 				minLightObjects.intensity -= lightAreaChangeSpeed * Time.deltaTime;
+				physicalLightAdd += lightAreaChangeSpeed * Time.deltaTime;
 				if (originalMinLightObjects - minLightObjects.intensity > lightAreaObjectReduce) {
 					minLightObjects.intensity = originalMinLightObjects - lightAreaObjectReduce;
+					physicalLightAdd = lightAreaObjectReduce;
 				}
 				minLightSky.intensity -= lightAreaChangeSpeed * Time.deltaTime;
 				if (originalMinLightSky - minLightSky.intensity > lightAreaSkyReduce) {
@@ -93,9 +98,11 @@ public class nightVisionGoggles : MonoBehaviour {
 				ren.sprite = darkImage;
 
 				minLightObjects.intensity += lightAreaChangeSpeed * Time.deltaTime;
+				physicalLightAdd -= lightAreaChangeSpeed * Time.deltaTime;
 				if (minLightObjects.intensity > originalMinLightObjects) {
 					minLightObjects.intensity = originalMinLightObjects;
-                }
+					physicalLightAdd = 0;
+				}
 				minLightSky.intensity += lightAreaChangeSpeed * Time.deltaTime;
 				if (minLightSky.intensity > originalMinLightSky) {
 					minLightSky.intensity = originalMinLightSky;
