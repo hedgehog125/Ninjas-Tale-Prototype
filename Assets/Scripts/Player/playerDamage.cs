@@ -9,6 +9,7 @@ public class playerDamage : MonoBehaviour {
 	[Header("")]
 	[SerializeField] private int maxHealth;
 	[SerializeField] private Vector2 knockbackAmount;
+	[SerializeField] private float deathPlaneY;
 
 	[Header("Times")]
 	[SerializeField] private int stunTime;
@@ -20,6 +21,7 @@ public class playerDamage : MonoBehaviour {
 
 	private int health;
 	private int invulnerabilityTick;
+	private Vector2 respawnLocation;
 
 	[HideInInspector] public int stunTick { get; private set; }
 
@@ -31,14 +33,21 @@ public class playerDamage : MonoBehaviour {
 
 		health = maxHealth;
 	}
+    private void Start() {
+		respawnLocation = transform.position;
+	}
 
-	private void FixedUpdate() {
+    private void FixedUpdate() {
 		if (invulnerabilityTick != 0) {
 			invulnerabilityTick--;
 		}
 		if (stunTick != 0) {
 			stunTick--;
 		}
+
+		if (transform.position.y < deathPlaneY) {
+			Die();
+        }
 	}
 
 	public void TakeDamage(int amount) {
@@ -84,6 +93,7 @@ public class playerDamage : MonoBehaviour {
 	}
 
 	private void Die() {
-		Debug.Log("TODO");
+		TakeDamage(-(maxHealth - health));
+		transform.position = respawnLocation;
 	}
 }

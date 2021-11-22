@@ -29,7 +29,13 @@ public class enemyAlerter : MonoBehaviour {
 
     private void FixedUpdate() {
 		inLight = false;
-        foreach (GameObject currentLight in inLightScript.inLightAreas) {
+        for (int i = 0; i < inLightScript.inLightAreas.Count; i++) {
+			GameObject currentLight = inLightScript.inLightAreas[i];
+			if (currentLight == null) { // Might have been destroyed
+				inLightScript.inLightAreas.Remove(currentLight);
+				continue;
+            }
+
             Vector2 distance = currentLight.transform.position - transform.position;
             Vector2 direction = distance.normalized;
 
