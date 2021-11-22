@@ -5,9 +5,11 @@ using UnityEngine.InputSystem;
 using UnityEngine.Experimental.Rendering.Universal;
 
 public class nightVisionGoggles : MonoBehaviour {
-    [Header("Game Objects")]
+    [Header("Game Objects and References")]
     [SerializeField] private GameObject goggles;
 	[SerializeField] private GameObject minLights;
+	[SerializeField] private Sprite lightImage;
+	[SerializeField] private SpriteRenderer ren;
 
 	// Also read by the controller script
 	[Header("When Active")]
@@ -30,6 +32,7 @@ public class nightVisionGoggles : MonoBehaviour {
 	private enemyAlerter alertScript;
 	private Light2D minLightObjects;
 	private Light2D minLightSky;
+	private Sprite darkImage;
 
 	[HideInInspector] public bool active; // Set by animation script
 
@@ -44,6 +47,7 @@ public class nightVisionGoggles : MonoBehaviour {
 		minLightSky = minLights.transform.GetChild(0).GetComponent<Light2D>();
 		originalMinLightObjects = minLightObjects.intensity;
 		originalMinLightSky = minLightSky.intensity;
+		darkImage = ren.sprite;
 
 
 		if (lightGlobalColor.a < 0.99f) {
@@ -74,9 +78,28 @@ public class nightVisionGoggles : MonoBehaviour {
 		}
 		else {
 			if (alertScript.inLight) {
-				if ()
+				ren.sprite = lightImage;
+
 				minLightObjects.intensity -= lightAreaChangeSpeed * Time.deltaTime;
-				minLightSky.intensity += ;
+				if (originalMinLightObjects - minLightObjects.intensity > lightAreaObjectReduce) {
+					minLightObjects.intensity = originalMinLightObjects - lightAreaObjectReduce;
+				}
+				minLightSky.intensity -= lightAreaChangeSpeed * Time.deltaTime;
+				if (originalMinLightSky - minLightSky.intensity > lightAreaSkyReduce) {
+					minLightSky.intensity = originalMinLightSky - lightAreaSkyReduce;
+				}
+			}
+			else {
+				ren.sprite = darkImage;
+
+				minLightObjects.intensity += lightAreaChangeSpeed * Time.deltaTime;
+				if (minLightObjects.intensity > originalMinLightObjects) {
+					minLightObjects.intensity = originalMinLightObjects;
+                }
+				minLightSky.intensity += lightAreaChangeSpeed * Time.deltaTime;
+				if (minLightSky.intensity > originalMinLightSky) {
+					minLightSky.intensity = originalMinLightSky;
+				}
 			}
 		}
     }
