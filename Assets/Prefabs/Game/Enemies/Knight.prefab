@@ -85,7 +85,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 65954
+  m_InstanceId: 35486
 --- !u!114 &3276844190360508992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -99,13 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerObject: {fileID: 0}
-  coneScript: {fileID: 7835562116706689880}
+  visionCone: {fileID: 8401192675687473852}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
   patrolPath: []
   delayTime: 50
-  spotTime: 20
   acceleration: 0.5
   stopMaintainance: 0.85
   maxSpeed: 3
+  jumpHeight: 7.5
+  spotTime: 25
+  spotCancelSpeed: 0.25
 --- !u!61 &3276844190360508995
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -147,7 +152,7 @@ Rigidbody2D:
   m_Mass: 0.75
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 1.75
   m_Material: {fileID: 6200000, guid: 67c003a16531845a48fc83d75df84496, type: 2}
   m_Interpolate: 0
   m_SleepingMode: 1
