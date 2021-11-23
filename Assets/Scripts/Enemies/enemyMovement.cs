@@ -138,20 +138,25 @@ public class enemyMovement : MonoBehaviour {
 	private void AttackState(ref Vector2 vel) {
 		direction = knownPlayerPosition.x > transform.position.x;
 
-		if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.01f) {
-			Vector2 center = col.bounds.center;
-			Vector2 size = col.bounds.size;
-			size.x -= 0.05f;
-			size.y = 0.1f;
-			center.y += 0.05f - (col.bounds.size.y / 2);
+		if (Mathf.Abs(transform.position.x - knownPlayerPosition.x) > 1.5f) {
+			if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.01f) { // Hit an obstacle
+				Vector2 center = col.bounds.center;
+				Vector2 size = col.bounds.size;
+				size.x -= 0.05f;
+				size.y = 0.1f;
+				center.y += 0.05f - (col.bounds.size.y / 2);
 
-			RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.02f, groundLayer);
-			if (hit.collider != null) {
- 				vel.y += jumpHeight;
+				RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.02f, groundLayer);
+				if (hit.collider != null) {
+					vel.y += jumpHeight;
+				}
 			}
+			lastPosition = transform.position;
+			MoveTick(ref vel, knownPlayerPosition);
 		}
-		lastPosition = transform.position;
-		MoveTick(ref vel, knownPlayerPosition);
+		else if (! coneScript.inCone) {
+			direction = ! direction;
+        }
 	}
 
 	private void Spotted(ref Vector2 vel) {
@@ -184,9 +189,9 @@ public class enemyMovement : MonoBehaviour {
 
     private void FixedUpdate() {
 		Vector2 vel = rb.velocity;
-        if (state == States.Default) {
+		DetectPlayer(ref vel);
+		if (state == States.Default) {
 			DefaultState(ref vel);
-			DetectPlayer(ref vel);
 		}
 		else if (state == States.Attacking) {
 			AttackState(ref vel);
