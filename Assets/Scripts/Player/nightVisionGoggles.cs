@@ -75,7 +75,6 @@ public class nightVisionGoggles : MonoBehaviour {
         }
 
 		if (active) {
-			minLightObjects.intensity = originalMinLightObjects;
 			minLightSky.intensity = originalMinLightSky;
 			physicalLightAdd = 0;
 		}

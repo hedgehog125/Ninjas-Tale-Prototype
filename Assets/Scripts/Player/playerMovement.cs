@@ -372,6 +372,7 @@ public class playerMovement : MonoBehaviour {
 			ledgeGrabTick++;
 			if (ledgeGrabY - transform.position.y >= 2 || ledgeGrabTick == 150) { // Fail-safe
 				ledgeGrabbing = false;
+				Debug.Log("A");
 			}
 			vel.x = wallJumpDirection? Mathf.Min(vel.x + (ledgeGrabAcceleration / 2), ledgeGrabMaxSpeed / 2) : Mathf.Max(vel.x - (ledgeGrabAcceleration / 2), -(ledgeGrabMaxSpeed / 2));
 			if (wallJumpDirection) {
