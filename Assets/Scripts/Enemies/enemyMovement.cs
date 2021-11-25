@@ -7,6 +7,7 @@ public class enemyMovement : MonoBehaviour {
 	[SerializeField] private GameObject playerObject;
 	[SerializeField] private GameObject visionCone;
 	[SerializeField] private enemyCollisionCheck largeHitboxScript;
+	[SerializeField] private BoxCollider2D ledgeDetectCol;
 	[SerializeField] private GameObject playerWasObject;
 	[SerializeField] private LayerMask groundLayer;
 
@@ -16,14 +17,18 @@ public class enemyMovement : MonoBehaviour {
 	[Header("Timings")]
 	[SerializeField] private int delayTime;
 	[SerializeField] private int checkBehindTime;
+	[SerializeField] private int maxSearchTime;
 
 	[Header("Speed")]
-	[SerializeField] private float acceleration;
+	[SerializeField] private float walkAcceleration;
+	[SerializeField] private float runAcceleration;
 	[SerializeField] private float stopMaintainance;
-	[SerializeField] private float maxSpeed;
+	[SerializeField] private float maxWalkSpeed;
+	[SerializeField] private float maxRunSpeed;
 
 	[Header("")]
 	[SerializeField] private float jumpPower;
+	[SerializeField] private float maxFallDistance;
 
 	[Header("Stealth")]
 	[SerializeField] private int spotTime;
@@ -31,21 +36,32 @@ public class enemyMovement : MonoBehaviour {
 
 
 	[HideInInspector] public bool direction { get; private set; } // Read by enemy visible script
+	private bool leaveDefaultDirection;
 
 	private Rigidbody2D rb;
 	private BoxCollider2D col;
 
 	private enemyAlerter alertScript;
+	private Rigidbody2D playerRb;
 	private playerConeDetector coneScript;
 
 	private int currentPoint;
 	private int playerTouching;
+	private bool running;
+	private bool isOnGround;
+
 	private Vector2 knownPlayerPosition;
+	private Vector2 knownPlayerVel;
+
 	private Vector2 lastPosition;
+	private Vector2 returnPoint;
+	private float lastMoveTarget;
+	private bool lastMoveSide;
 
 	private int delayTick;
 	private float spotTick;
 	private int stuckTick;
+	public int searchTick;
 
 	private bool triedJumpingObstacle;
 	private bool aboutToPathfind;
@@ -54,6 +70,7 @@ public class enemyMovement : MonoBehaviour {
 	private bool surprisedJumpActive;
 
 	private bool searchDirection;
+	private bool searchTurned;
 
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("PlayerMain")) {
@@ -67,12 +84,13 @@ public class enemyMovement : MonoBehaviour {
 	}
 
 
-	private enum States {
+	public enum States {
 		Default,
 		Searching,
-		Attacking
+		Attacking,
+		Returning
     }
-	private States state;
+	public States state;
 
     private void Awake() {
 		transform.position += transform.parent.transform.position;
@@ -82,6 +100,7 @@ public class enemyMovement : MonoBehaviour {
 		col = GetComponent<BoxCollider2D>();
 
 		alertScript = playerObject.GetComponent<enemyAlerter>();
+		playerRb = playerObject.GetComponent<Rigidbody2D>();
 		coneScript = visionCone.GetComponent<playerConeDetector>();
     }
 
@@ -92,6 +111,9 @@ public class enemyMovement : MonoBehaviour {
 			Vector2 nextPoint = patrolPath[currentPoint] + new Vector2(0.5f, 0.25f);
 			direction = nextPoint.x > transform.position.x;
 		}
+		else if (patrolPath.Count == 0) {
+			patrolPath.Add(new Vector2Int((int)(transform.position.x - 0.5f), (int)(transform.position.y - 0.25f))); // So the enemy knows where to go back to after giving up searching
+        }
 	}
 
 	private void DefaultState(ref Vector2 vel) {
@@ -102,7 +124,7 @@ public class enemyMovement : MonoBehaviour {
 			else {
 				if (delayTick == 0) {
 					Vector2 nextPoint = patrolPath[currentPoint] + new Vector2(0.5f, 0.25f);
-					if (MoveTick(ref vel, nextPoint, false)) { // Passed target
+					if (MoveTick(ref vel, nextPoint)[0]) { // Passed target
 						if (Mathf.Abs(vel.x) < 0.1f) {
 							delayTick = 1;
 						}
@@ -130,7 +152,7 @@ public class enemyMovement : MonoBehaviour {
 		}
 		else if (
 			(coneScript.inCone && alertScript.inLight)
-			|| (state != States.Default && coneScript.inLargeCone)
+			|| ((state == States.Attacking || state == States.Searching) && coneScript.inLargeCone)
 		) {
 			Vector2 distance = playerObject.transform.position - transform.position;
 			Vector2 castDirection = distance.normalized;
@@ -164,7 +186,7 @@ public class enemyMovement : MonoBehaviour {
 
 	private void AttackState(ref Vector2 vel, bool lineOfSight) {
 		if (surprisedJumpActive) {
-			if (isOnGround() && vel.y <= 0) {
+			if (isOnGround && vel.y <= 0) {
 				surprisedJumpActive = false;
 				lastPosition.x += 2; // Ignore lack of movement on this frame
 			}
@@ -195,55 +217,119 @@ public class enemyMovement : MonoBehaviour {
 					float steepness = Mathf.Abs((knownPlayerPosition.y / transform.position.y) / difference);
 					bool worthTurning = (difference > col.bounds.size.x) && steepness < 15;
 
-					if ((! coneScript.inLargeCone) && (worthTurning || Vector2.Distance(knownPlayerPosition, playerObject.transform.position) > 0.5f)) {
-						direction = ! direction;
-						checkBehindTick = 1;
+					if (! coneScript.inLargeCone) {
+						if (worthTurning || Vector2.Distance(knownPlayerPosition, playerObject.transform.position) > 0.5f) {
+							direction = ! direction;
+							checkBehindTick = 1;
+						}
+						else {
+							StartSearching();
+                        }
 					}
                 }
 			}
 			else {
 				if (pathfinding) {
-					Debug.Log("A");
+					GiveUp();
 				}
 				else {
-					MoveTick(ref vel, knownPlayerPosition, true);
+					MoveTick(ref vel, knownPlayerPosition);
 				}
 			}
 		}
 	}
 	private void SearchTick(ref Vector2 vel, bool lineOfSight) {
 		if (lineOfSight) {
-			state = States.Attacking;
+			Spotted(ref vel);
 		}
-		MoveTick(ref vel, (Vector2)transform.position + new Vector2(searchDirection? 1 : -1, 0), true);
+		else {
+			if (searchTick == maxSearchTime) {
+				GiveUp();
+            }
+			else {
+				searchTick++;
+            }
+        }
+		if (MoveTick(ref vel, (Vector2)transform.position + new Vector2(searchDirection? 1 : -1, 0))[1]) {
+			if (! searchTurned) {
+				searchDirection = ! searchDirection;
+				searchTurned = true;
+			}
+		}
 	}
 
+	private void ReturnTick(ref Vector2 vel, bool lineOfSight) {
+		if (MoveTick(ref vel, returnPoint)[0]) {
+			state = States.Default;
+			direction = leaveDefaultDirection;
+        }
+    }
+
 	private void Spotted(ref Vector2 vel) {
-		if (state == States.Default) {
+		if (state != States.Attacking) {
 			spotTick = 0;
 			state = States.Attacking;
-			if (isOnGround()) {
+			if (isOnGround) {
 				surprisedJumpActive = true;
 				vel.y += jumpPower / 1.5f;
 			}
+			leaveDefaultDirection = direction;
 		}
 		knownPlayerPosition = playerObject.transform.position;
+		knownPlayerVel = playerRb.velocity;
 	}
 	private void StartSearching() {
-		searchDirection = knownPlayerPosition.x > transform.position.x;
 		state = States.Searching;
+		searchTick = 0;
+		searchDirection = Mathf.Abs(knownPlayerVel.x) > 0.5f? knownPlayerVel.x > 0 : knownPlayerPosition.x > transform.position.x;
+		searchTurned = false;
 	}
+	private void GiveUp() {
+		state = States.Returning;
 
-	private bool MoveTick(ref Vector2 vel, Vector2 target, bool autoTurn) {
+		float closest = Mathf.Infinity;
+		int closestID = 0;
+		for (int i = 0; i < patrolPath.Count; i++) {
+			Vector2 point = patrolPath[i];
+			float distance = Mathf.Abs((point.x + 0.5f) - transform.position.x);
+			if (distance < closest) {
+				closest = distance;
+				closestID = i;
+            }
+        }
+		returnPoint = patrolPath[closestID] + new Vector2(0.5f, 0.25f);
+		currentPoint = closestID;
+
+		direction = returnPoint.x > transform.position.x;
+    }
+
+	private bool[] MoveTick(ref Vector2 vel, Vector2 target) {
+		bool[] toReturn = new bool[2];
+		direction = target.x > transform.position.x;
+		if (isOnGround) {
+			if (! ledgeDetectCol.IsTouchingLayers(groundLayer)) { // Make sure it's not in a wall
+				RaycastHit2D hit = Physics2D.BoxCast(ledgeDetectCol.bounds.center, ledgeDetectCol.bounds.size, 0, Vector2.down, maxFallDistance, groundLayer);
+				if (hit.collider == null) {
+					lastPosition = transform.position;
+					Debug.Log("A");
+
+					toReturn[0] = true;
+					toReturn[1] = true;
+					vel.x *= stopMaintainance;
+					return toReturn;
+				}
+            }
+        }
+
 		if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.05f) { // Hit an obstacle
 			if (stuckTick == 5) {
 				if (state != States.Default) {
-					if (triedJumpingObstacle && isOnGround() && vel.y <= 0) {
+					if (triedJumpingObstacle && isOnGround && vel.y <= 0) {
 						direction = ! direction;
 						aboutToPathfind = true;
 					}
 				}
-				if (isOnGround()) {
+				if (isOnGround) {
 					vel.y += jumpPower;
 					triedJumpingObstacle = true;
 				}
@@ -258,53 +344,71 @@ public class enemyMovement : MonoBehaviour {
 		}
 		lastPosition = transform.position;
 
+		bool canHavePassed = target.x == lastMoveTarget;
 		if (target.x > transform.position.x) {
-			if (autoTurn) direction = true;
-			if (direction) {
-				vel.x += acceleration;
+			if (lastMoveSide || (! canHavePassed)) {
+				lastMoveSide = true;
+				lastMoveTarget = target.x;
+
+				vel.x += running? runAcceleration : walkAcceleration;
 			}
 			else { // Passed it
+				lastMoveSide = true;
+				lastMoveTarget = target.x;
+
 				vel.x *= stopMaintainance;
-				return true;
+				toReturn[0] = true;
+				return toReturn;
 			}
 		}
 		else {
-			if (autoTurn) direction = false;
-			if (direction) { // Passed it
-				vel.x *= stopMaintainance;
-				return true;
+            if (lastMoveSide && canHavePassed) { // Passed it
+                lastMoveSide = false;
+                lastMoveTarget = target.x;
+
+                vel.x *= stopMaintainance;
+				toReturn[0] = true;
+				return toReturn;
 			}
-			else {
-				vel.x -= acceleration;
-			}
-		}
-		return false;
+            else {
+                lastMoveSide = false;
+                lastMoveTarget = target.x;
+
+                vel.x -= running? runAcceleration : walkAcceleration;
+            }
+        }
+		return toReturn;
 	}
-	private bool isOnGround() {
+	private bool DetectGround() {
 		Vector2 center = col.bounds.center;
 		Vector2 size = col.bounds.size;
-		size.x -= 0.05f;
 		size.y = 0.1f;
-		center.y += 0.05f - (col.bounds.size.y / 2);
+		center.y += 0.1f - (col.bounds.size.y / 2);
 
-		RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.02f, groundLayer);
+		RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.07f, groundLayer);
 		return hit.collider != null;
 	}
 
     private void FixedUpdate() {
 		Vector2 vel = rb.velocity;
 		bool lineOfSight = DetectPlayer(ref vel);
+		running = state == States.Attacking;
+		isOnGround = DetectGround();
+
 		if (state == States.Default) {
 			DefaultState(ref vel);
 		}
 		else if (state == States.Attacking) {
 			AttackState(ref vel, lineOfSight);
 		}
-		else {
+		else if (state == States.Searching) {
 			SearchTick(ref vel, lineOfSight);
         }
+		else if (state == States.Returning) {
+			ReturnTick(ref vel, lineOfSight);
+		}
 
-		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxSpeed) * Mathf.Sign(vel.x), vel.y);
+		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), running? maxRunSpeed : maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
 	}
 
     private void LateUpdate() {
