@@ -12,7 +12,10 @@ public class enemyMovement : MonoBehaviour {
 
 	[Header("")]
 	[SerializeField] private List<Vector2Int> patrolPath;
+
+	[Header("Timings")]
 	[SerializeField] private int delayTime;
+	[SerializeField] private int checkBehindTime;
 
 	[Header("Speed")]
 	[SerializeField] private float acceleration;
@@ -37,15 +40,20 @@ public class enemyMovement : MonoBehaviour {
 
 	private int currentPoint;
 	private int playerTouching;
-	public Vector2 knownPlayerPosition;
+	private Vector2 knownPlayerPosition;
 	private Vector2 lastPosition;
 
 	private int delayTick;
 	private float spotTick;
+	private int stuckTick;
 
 	private bool triedJumpingObstacle;
 	private bool aboutToPathfind;
+	private int checkBehindTick;
 	private bool pathfinding;
+	private bool surprisedJumpActive;
+
+	private bool searchDirection;
 
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("PlayerMain")) {
@@ -67,6 +75,9 @@ public class enemyMovement : MonoBehaviour {
 	private States state;
 
     private void Awake() {
+		transform.position += transform.parent.transform.position;
+		transform.parent.transform.position = new Vector2();
+
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<BoxCollider2D>();
 
@@ -113,7 +124,7 @@ public class enemyMovement : MonoBehaviour {
 			}
 		}
     }
-	private void DetectPlayer(ref Vector2 vel) {
+	private bool DetectPlayer(ref Vector2 vel) {
 		if (playerTouching != 0) {
 			Spotted(ref vel);
 		}
@@ -131,10 +142,12 @@ public class enemyMovement : MonoBehaviour {
 					spotTick++;
 					if (spotTick >= spotTime) {
 						Spotted(ref vel);
+						return true;
 					}
 				}
 				else {
 					Spotted(ref vel);
+					return true;
                 }
 			}
 			else if (state == States.Default) {
@@ -146,40 +159,63 @@ public class enemyMovement : MonoBehaviour {
 			spotTick--;
 			if (spotTick < 0) spotTick = 0;
 		}
+		return false;
 	}
 
-	private void AttackState(ref Vector2 vel) {
-		if (delayTick == delayTime / 2) {
-			if (largeHitboxScript.inCollider) { // Near to the known position
-				float difference = knownPlayerPosition.x - transform.position.x;
-				float steepness = Mathf.Abs((knownPlayerPosition.y / transform.position.y) / difference);
-				bool worthTurning = (difference > col.bounds.size.x) && steepness < 15;
-
-				if ((! coneScript.inLargeCone) && (worthTurning || Vector2.Distance(knownPlayerPosition, playerObject.transform.position) > 0.5f)) {
-					direction = ! direction;
-				}
-			}
-			else {
-				if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.05f) { // Hit an obstacle
-					if (triedJumpingObstacle) {
-						direction = ! direction;
-						aboutToPathfind = true;
-					}
-					if (isOnGround()) {
-						vel.y += jumpPower;
-						triedJumpingObstacle = true;
-					}
-				}
-				else {
-					triedJumpingObstacle = false;
-				}
-				lastPosition = transform.position;
-				MoveTick(ref vel, knownPlayerPosition, true);
+	private void AttackState(ref Vector2 vel, bool lineOfSight) {
+		if (surprisedJumpActive) {
+			if (isOnGround() && vel.y <= 0) {
+				surprisedJumpActive = false;
+				lastPosition.x += 2; // Ignore lack of movement on this frame
 			}
 		}
 		else {
-			delayTick++;
-        }
+			if (checkBehindTick != 0) {
+				if (lineOfSight) {
+					checkBehindTick = 0;
+                }
+				else {
+					if (checkBehindTick == checkBehindTime) {
+						checkBehindTick = 0;
+						StartSearching();
+					}
+					else {
+						checkBehindTick++;
+                    }
+                }
+			}
+			else if (aboutToPathfind && (! lineOfSight)) {
+				pathfinding = true;
+				aboutToPathfind = false;
+			}
+
+			if (largeHitboxScript.inCollider) { // Near to the known position
+				if (checkBehindTick == 0) {
+					float difference = knownPlayerPosition.x - transform.position.x;
+					float steepness = Mathf.Abs((knownPlayerPosition.y / transform.position.y) / difference);
+					bool worthTurning = (difference > col.bounds.size.x) && steepness < 15;
+
+					if ((! coneScript.inLargeCone) && (worthTurning || Vector2.Distance(knownPlayerPosition, playerObject.transform.position) > 0.5f)) {
+						direction = ! direction;
+						checkBehindTick = 1;
+					}
+                }
+			}
+			else {
+				if (pathfinding) {
+					Debug.Log("A");
+				}
+				else {
+					MoveTick(ref vel, knownPlayerPosition, true);
+				}
+			}
+		}
+	}
+	private void SearchTick(ref Vector2 vel, bool lineOfSight) {
+		if (lineOfSight) {
+			state = States.Attacking;
+		}
+		MoveTick(ref vel, (Vector2)transform.position + new Vector2(searchDirection? 1 : -1, 0), true);
 	}
 
 	private void Spotted(ref Vector2 vel) {
@@ -187,13 +223,41 @@ public class enemyMovement : MonoBehaviour {
 			spotTick = 0;
 			state = States.Attacking;
 			if (isOnGround()) {
-				vel.y += jumpPower;
+				surprisedJumpActive = true;
+				vel.y += jumpPower / 1.5f;
 			}
-			delayTick = 0;
 		}
 		knownPlayerPosition = playerObject.transform.position;
 	}
+	private void StartSearching() {
+		searchDirection = knownPlayerPosition.x > transform.position.x;
+		state = States.Searching;
+	}
+
 	private bool MoveTick(ref Vector2 vel, Vector2 target, bool autoTurn) {
+		if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.05f) { // Hit an obstacle
+			if (stuckTick == 5) {
+				if (state != States.Default) {
+					if (triedJumpingObstacle && isOnGround() && vel.y <= 0) {
+						direction = ! direction;
+						aboutToPathfind = true;
+					}
+				}
+				if (isOnGround()) {
+					vel.y += jumpPower;
+					triedJumpingObstacle = true;
+				}
+			}
+			else {
+				stuckTick++;
+			}
+		}
+		else {
+			triedJumpingObstacle = false;
+			stuckTick = 0;
+		}
+		lastPosition = transform.position;
+
 		if (target.x > transform.position.x) {
 			if (autoTurn) direction = true;
 			if (direction) {
@@ -229,13 +293,16 @@ public class enemyMovement : MonoBehaviour {
 
     private void FixedUpdate() {
 		Vector2 vel = rb.velocity;
-		DetectPlayer(ref vel);
+		bool lineOfSight = DetectPlayer(ref vel);
 		if (state == States.Default) {
 			DefaultState(ref vel);
 		}
 		else if (state == States.Attacking) {
-			AttackState(ref vel);
+			AttackState(ref vel, lineOfSight);
 		}
+		else {
+			SearchTick(ref vel, lineOfSight);
+        }
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), maxSpeed) * Mathf.Sign(vel.x), vel.y);
 	}
