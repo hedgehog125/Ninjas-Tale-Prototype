@@ -74,9 +74,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 4622548052886459531}
+  - {fileID: 4956953190619061974}
   m_Father: {fileID: 3118529790518834287}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &5580824450726456764
 Rigidbody2D:
@@ -109,7 +109,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4956953190619061974}
   - component: {fileID: 409937389631165113}
-  - component: {fileID: 8858368745174090700}
   - component: {fileID: 4619379477902701216}
   m_Layer: 11
   m_Name: VisionConeSmall
@@ -126,11 +125,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3831434062055122989}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.2, y: 0.39999998, z: 0}
+  m_LocalPosition: {x: 0.19999981, y: 0.39999998, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8401192675687473853}
-  m_Father: {fileID: 3118529790518834287}
+  m_Father: {fileID: 9124388143749440874}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!60 &409937389631165113
@@ -162,27 +161,6 @@ PolygonCollider2D:
       - {x: -0.5, y: 0.025}
       - {x: 20, y: 1.5}
       - {x: 20, y: -1.5}
---- !u!50 &8858368745174090700
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3831434062055122989}
-  m_BodyType: 1
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
 --- !u!114 &4619379477902701216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -253,63 +231,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.7, y: 0.1}
   m_EdgeRadius: 0
---- !u!1 &4985912021732891551
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4622548052886459531}
-  - component: {fileID: 3469040798074734145}
-  m_Layer: 0
-  m_Name: LedgeDetectCol
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4622548052886459531
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4985912021732891551}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 9124388143749440874}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!61 &3469040798074734145
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4985912021732891551}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -1.15}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 2.5}
-    newSize: {x: 1, y: 2.5}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  serializedVersion: 2
-  m_Size: {x: 0.7, y: 0.1}
-  m_EdgeRadius: 0
 --- !u!1 &5774510686856215778
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,7 +288,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 2.5, y: 2.5}
+  m_Size: {x: 2.5, y: 100}
   m_EdgeRadius: 0
 --- !u!114 &3488797005007825840
 MonoBehaviour:
@@ -431,7 +352,6 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 4956953190619061974}
   - {fileID: 9124388143749440874}
   m_Father: {fileID: 2237818093844240398}
   m_RootOrder: 0
@@ -744,7 +664,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 59410
+  m_InstanceId: 30166
 --- !u!114 &2560374493410708009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -760,7 +680,6 @@ MonoBehaviour:
   playerObject: {fileID: 0}
   visionCone: {fileID: 3831434062055122989}
   largeHitboxScript: {fileID: 3488797005007825840}
-  ledgeDetectCol: {fileID: 3469040798074734145}
   playerWasObject: {fileID: 8576740314965937146}
   groundLayer:
     serializedVersion: 2
@@ -772,7 +691,7 @@ MonoBehaviour:
   walkAcceleration: 0.5
   runAcceleration: 1
   stopMaintainance: 0.85
-  maxWalkSpeed: 3
+  maxWalkSpeed: 2
   maxRunSpeed: 5
   jumpPower: 12.5
   maxFallDistance: 10

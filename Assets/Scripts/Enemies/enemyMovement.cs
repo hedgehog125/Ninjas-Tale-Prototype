@@ -7,7 +7,6 @@ public class enemyMovement : MonoBehaviour {
 	[SerializeField] private GameObject playerObject;
 	[SerializeField] private GameObject visionCone;
 	[SerializeField] private enemyCollisionCheck largeHitboxScript;
-	[SerializeField] private BoxCollider2D ledgeDetectCol;
 	[SerializeField] private GameObject playerWasObject;
 	[SerializeField] private LayerMask groundLayer;
 
@@ -268,12 +267,14 @@ public class enemyMovement : MonoBehaviour {
 	private void Spotted(ref Vector2 vel) {
 		if (state != States.Attacking) {
 			spotTick = 0;
-			state = States.Attacking;
 			if (isOnGround) {
 				surprisedJumpActive = true;
 				vel.y += jumpPower / 1.5f;
 			}
-			leaveDefaultDirection = direction;
+			if (state == States.Default) {
+				leaveDefaultDirection = direction;
+			}
+			state = States.Attacking;
 		}
 		knownPlayerPosition = playerObject.transform.position;
 		knownPlayerVel = playerRb.velocity;
@@ -307,11 +308,11 @@ public class enemyMovement : MonoBehaviour {
 		bool[] toReturn = new bool[2];
 		direction = target.x > transform.position.x;
 		if (isOnGround) {
-			if (! ledgeDetectCol.IsTouchingLayers(groundLayer)) { // Make sure it's not in a wall
-				RaycastHit2D hit = Physics2D.BoxCast(ledgeDetectCol.bounds.center, ledgeDetectCol.bounds.size, 0, Vector2.down, maxFallDistance, groundLayer);
+			RaycastHit2D hit = Physics2D.BoxCast(col.bounds.center, (Vector2)col.bounds.size - new Vector2(0, 0.05f), 0, direction? Vector2.right : Vector2.left, col.bounds.size.x, groundLayer);
+			if (hit.collider == null) { // Make sure it's not in a wall
+				hit = Physics2D.BoxCast((Vector2)col.bounds.center + new Vector2(direction? 1 : -1, 0), new Vector2(0.1f, 0.1f), 0, Vector2.down, maxFallDistance, groundLayer);
 				if (hit.collider == null) {
 					lastPosition = transform.position;
-					Debug.Log("A");
 
 					toReturn[0] = true;
 					toReturn[1] = true;
@@ -344,7 +345,7 @@ public class enemyMovement : MonoBehaviour {
 		}
 		lastPosition = transform.position;
 
-		bool canHavePassed = target.x == lastMoveTarget;
+		bool canHavePassed = Mathf.Abs(target.x - lastMoveTarget) < 0.01f;
 		if (target.x > transform.position.x) {
 			if (lastMoveSide || (! canHavePassed)) {
 				lastMoveSide = true;
