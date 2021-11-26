@@ -59,8 +59,7 @@ public class enemyMovement : MonoBehaviour {
 
 	private int delayTick;
 	private float spotTick;
-	private int stuckTick;
-	public int searchTick;
+	private int searchTick;
 
 	private bool triedJumpingObstacle;
 	private bool aboutToPathfind;
@@ -83,13 +82,13 @@ public class enemyMovement : MonoBehaviour {
 	}
 
 
-	public enum States {
+	private enum States {
 		Default,
 		Searching,
 		Attacking,
 		Returning
     }
-	public States state;
+	private States state;
 
     private void Awake() {
 		transform.position += transform.parent.transform.position;
@@ -210,7 +209,7 @@ public class enemyMovement : MonoBehaviour {
 				aboutToPathfind = false;
 			}
 
-			if (largeHitboxScript.inCollider) { // Near to the known position
+			if (largeHitboxScript.inCollider && lineOfSight) { // Near to the known position
 				if (checkBehindTick == 0) {
 					float difference = knownPlayerPosition.x - transform.position.x;
 					float steepness = Mathf.Abs((knownPlayerPosition.y / transform.position.y) / difference);
@@ -307,6 +306,7 @@ public class enemyMovement : MonoBehaviour {
 	private bool[] MoveTick(ref Vector2 vel, Vector2 target) {
 		bool[] toReturn = new bool[2];
 		direction = target.x > transform.position.x;
+		bool wallInFront = false;
 		if (isOnGround) {
 			RaycastHit2D hit = Physics2D.BoxCast(col.bounds.center, (Vector2)col.bounds.size - new Vector2(0, 0.05f), 0, direction? Vector2.right : Vector2.left, col.bounds.size.x, groundLayer);
 			if (hit.collider == null) { // Make sure it's not in a wall
@@ -320,28 +320,25 @@ public class enemyMovement : MonoBehaviour {
 					return toReturn;
 				}
             }
-        }
+			else {
+				wallInFront = true;
+			}
+		}
 
-		if (Mathf.Abs(transform.position.x - lastPosition.x) <= 0.05f) { // Hit an obstacle
-			if (stuckTick == 5) {
-				if (state != States.Default) {
-					if (triedJumpingObstacle && isOnGround && vel.y <= 0) {
-						direction = ! direction;
-						aboutToPathfind = true;
-					}
-				}
-				if (isOnGround) {
-					vel.y += jumpPower;
-					triedJumpingObstacle = true;
+		if (wallInFront) { // Hit an obstacle
+			if (state != States.Default) {
+				if (triedJumpingObstacle && isOnGround && vel.y <= 0) {
+					direction = ! direction;
+					aboutToPathfind = true;
 				}
 			}
-			else {
-				stuckTick++;
+			if (isOnGround) {
+				vel.y += jumpPower;
+				triedJumpingObstacle = true;
 			}
 		}
 		else {
 			triedJumpingObstacle = false;
-			stuckTick = 0;
 		}
 		lastPosition = transform.position;
 
