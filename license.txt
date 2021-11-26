@@ -1,0 +1,20 @@
+Ninja's Tale prototype (not to be confused with the planned/upcoming full version).
+Copyright (C) 2021 Nicholas Clack (hedgehog125) (https://github.com/hedgehog125)
+
+This license also applies to all previous versions of this game, I hadn't decided how I wanted to license it and hadn't got around to it.
+License found here: https://www.gnu.org/licenses/gpl-3.0.html
+Assets made by other people may be subject to different licenses, see credits.txt for more information.
+
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
