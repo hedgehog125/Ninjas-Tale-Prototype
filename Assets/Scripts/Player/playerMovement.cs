@@ -40,13 +40,14 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] private float ledgeGrabAcceleration;
 	[SerializeField] private float ledgeGrabMaxSpeed;
 
-	// These are katana related and are only used in the attack script but they're movement related so the values are set here
+	// These are katana related and are only used in the attack script but they're movement related so the values are set here (also why they're public)
 	[Header("Katana Movement")]
 	[SerializeField] public float throwHeightBoost;
 	[SerializeField] public int throwTime;
 	[SerializeField] public float throwMomentumCancelMultiplier; // Backwards and neutral
 	[SerializeField] public float throwMomentumReduceMultiplier; // Forwards
 
+	// Same here
 	[Header("Melee Movement")]
 	[SerializeField] public float meleeAirXBoost;
 	[SerializeField] public float meleeAirYBoost;
@@ -57,6 +58,10 @@ public class playerMovement : MonoBehaviour {
 	[SerializeField] public float meleeAfterBoostMaintainance;
 	[SerializeField] public int meleeStopTime;
 
+
+	[Header("Sounds")]
+	[SerializeField] private AudioSource landGrassSound;
+	[SerializeField] private AudioSource fallSound;
 
 
 	private Rigidbody2D rb;
@@ -204,6 +209,18 @@ public class playerMovement : MonoBehaviour {
 		bool isOnGround = DetectGrounded();
 		if (isOnGround) {
 			coyoteTick = 0;
+			if (! wasOnGround) { // Landed
+				landGrassSound.volume = -velWas.y / 75f;
+				landGrassSound.Play();
+				fallSound.Stop();
+			}
+		}
+		else {
+			fallSound.volume = Mathf.Min(-velWas.y / 100f, 0.2f);
+			if ((! fallSound.isPlaying) && rb.velocity.y < -1) {
+				fallSound.time = Random.Range(0, fallSound.clip.length / 2f);
+				fallSound.Play();
+			}
 		}
 		if ((! isOnGround) && coyoteTick < coyoteTime) {
 			isOnGround = true;
@@ -223,7 +240,7 @@ public class playerMovement : MonoBehaviour {
 				wasOnWall = false;
 				isOnWall = false; // Only for this frame
 				rb.gravityScale = normalGravity;
-				transform.position = new Vector2(transform.position.x + (direction ? -0.025f : 0.025f), transform.position.y); // Move away from the wall slightly to stop friction
+				transform.position = new Vector2(transform.position.x + (direction? -0.025f : 0.025f), transform.position.y); // Move away from the wall slightly to stop friction
 
 				// So you have to press down again to fall faster
 				moveInputNeutralY = true;
@@ -421,9 +438,9 @@ public class playerMovement : MonoBehaviour {
     private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 		yAcceleration = (vel - velWas).y;
-		velWas = vel;
 
 		bool isOnGround = GroundDetectTick();
+		velWas = vel; // velWas is read by ground detect tick
 		bool[] outputs = DetectWallSlideTick(isOnGround);
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];

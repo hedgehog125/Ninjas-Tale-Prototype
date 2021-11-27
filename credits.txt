@@ -12,12 +12,14 @@ MLG Sunglasses based off of the meme which can be found here: https://knowyourme
 
 = Effects, shortened original name followed by filename if different =
 Knife sound (katanaHitEnemy): https://freesound.org/people/Aris621/sounds/435238/
-Wind: https://freesound.org/people/Josethehedgehog/sounds/390380/
+Wind, trimmed and fades added: https://freesound.org/people/Josethehedgehog/sounds/390380/
 Punch (hitEnemy), volume increased slightly: https://freesound.org/people/CastIronCarousel/sounds/216783/
-Land (converted to mp3): https://freesound.org/people/hordik/sounds/476114/
+Land, trimmed: https://freesound.org/people/hordik/sounds/476114/
 Switch (nightVisionSwitch): https://freesound.org/people/MastersDisaster/sounds/218115/
 Checkpoint: https://freesound.org/people/Deathscyp/sounds/506016/
-Collect crystal (collectStar): https://freesound.org/people/axilirate/sounds/592346/
+Collect crystal (collectSomething): https://freesound.org/people/axilirate/sounds/592346/
 Collect coin: https://freesound.org/people/SRJA_Gaming/sounds/543270/
 Bow, split into separate variation files: https://freesound.org/people/Benboncan/sounds/85019/
 Bow loading, volume increased: https://freesound.org/people/EminYILDIRIM/sounds/536067/
+Sword pulled (katanaTakeOut): https://freesound.org/people/jobro/sounds/74831/
+Sword put away (katanaPutAway): https://freesound.org/people/cribbler/sounds/381863/

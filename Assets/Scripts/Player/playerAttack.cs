@@ -13,6 +13,11 @@ public class playerAttack : MonoBehaviour {
 	[SerializeField] private int maxThrowBufferTime;
 	[SerializeField] private float minThrowDistance;
 
+	[Header("Sounds")]
+	[SerializeField] private AudioSource katanaTakeOutSound;
+	[SerializeField] private AudioSource katanaPutAwaySound;
+	[SerializeField] private AudioSource katanaThrowSound;
+
 
 	private playerMovement moveScript;
 	private Rigidbody2D rb;
@@ -189,6 +194,7 @@ public class playerAttack : MonoBehaviour {
 					else {
 						katanaScript.throwing = false;
 						katanaScript.MultipleStart();
+						katanaTakeOutSound.Play();
 					}
 				}
 			}
@@ -208,8 +214,11 @@ public class playerAttack : MonoBehaviour {
 			}
 			if (meleeTick == moveScript.meleeStopTime) {
 				meleeTick = 0;
-            }
+			}
 			else {
+				if (meleeTick == moveScript.meleeStopTime - 10) {
+					katanaPutAwaySound.Play();
+				}
 				meleeTick++;
             }
         }
