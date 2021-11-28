@@ -62,6 +62,8 @@ public class playerMovement : MonoBehaviour {
 	[Header("Sounds")]
 	[SerializeField] private AudioSource landGrassSound;
 	[SerializeField] private AudioSource fallSound;
+	[SerializeField] private AudioSource jumpSound;
+
 
 
 	private Rigidbody2D rb;
@@ -99,6 +101,7 @@ public class playerMovement : MonoBehaviour {
 	[HideInInspector] public int wallJumpCoyoteTick; // Modified by attack script
 	private bool wallJumpPendingDirection;
 	private int wallJumpPreventBackwardsTick;
+	private bool touchedWallSinceGround;
 
 	private bool ledgeGrabbing;
 	private float ledgeGrabX;
@@ -153,14 +156,29 @@ public class playerMovement : MonoBehaviour {
 		Vector2 size = col.bounds.size;
 
 		bool[] outputs = new bool[2];
+		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
+		if (raycastCenter.collider == null) return outputs;
+
+
+		bool movingTowards = true;
+		if (! (wasOnWall || wallSlideBuffered)) {
+			if (moveInputNeutralX && Mathf.Abs(rb.velocity.x) < minSlideTriggerSpeed) movingTowards = false;
+			else if ((! moveInputNeutralX) && moveInput.x > 0 != direction) movingTowards = false; // Not moving towards the wall
+		}
+
+		if ((! touchedWallSinceGround) && movingTowards) {
+			landGrassSound.volume = Mathf.Abs(velWas.x) / 30f;
+			landGrassSound.Play();
+			touchedWallSinceGround = true;
+		}
+
+		// These early returns are slightly later here so the sound can still play if there's contact
 		if (isOnGround) {
 			wallSlideBuffered = false;
 			wallJumpCoyoteTick = coyoteTime;
 			return outputs;
 		}
 		if (attackScript.meleeTick != 0) return outputs;
-		RaycastHit2D raycastCenter = Physics2D.BoxCast(center, size, 0, direction? Vector2.right : Vector2.left, 0.1f, groundLayer);
-		if (raycastCenter.collider == null) return outputs;
 
 		if (! ledgeCol.IsTouchingLayers(groundLayer)) {
 			RaycastHit2D raycastTop = Physics2D.BoxCast(ledgeCol.bounds.center, ledgeCol.bounds.size, 0, Vector2.up, 3, groundLayer);
@@ -176,12 +194,7 @@ public class playerMovement : MonoBehaviour {
 			}
 		}
 
-		bool canSlide = true;
-		if (! (wasOnWall || wallSlideBuffered)) {
-			if (moveInputNeutralX && Mathf.Abs(rb.velocity.x) < minSlideTriggerSpeed) canSlide = false;
-			else if ((! moveInputNeutralX) && moveInput.x > 0 != direction) canSlide = false; // Not moving towards the wall
-		}
-
+		bool canSlide = movingTowards;
 		if (canSlide && hasWallJumped) { // Extra requirements if the player has wall jumped since touching the ground
 			if (direction == wallJumpDirection && transform.position.y > wallJumpHeight) { // The player last jumped off this wall from a lower height, can't wall jump
 				canSlide = false;
@@ -209,6 +222,7 @@ public class playerMovement : MonoBehaviour {
 		bool isOnGround = DetectGrounded();
 		if (isOnGround) {
 			coyoteTick = 0;
+			touchedWallSinceGround = false;
 			if (! wasOnGround) { // Landed
 				landGrassSound.volume = -velWas.y / 75f;
 				landGrassSound.Play();
@@ -295,6 +309,8 @@ public class playerMovement : MonoBehaviour {
 					jumpBufferTick = 0;
 					coyoteTick = coyoteTime;
 					jumpBufferInput = false;
+
+					jumpSound.Play();
 				}
 				else {
 					jumpHoldTick++;
@@ -440,7 +456,6 @@ public class playerMovement : MonoBehaviour {
 		yAcceleration = (vel - velWas).y;
 
 		bool isOnGround = GroundDetectTick();
-		velWas = vel; // velWas is read by ground detect tick
 		bool[] outputs = DetectWallSlideTick(isOnGround);
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];
@@ -460,6 +475,7 @@ public class playerMovement : MonoBehaviour {
 		else {
 			rb.velocity = vel;
         }
+		velWas = vel;
 	}
 
 	public void LateUpdate() {

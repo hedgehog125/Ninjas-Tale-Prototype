@@ -189,7 +189,7 @@ public class playerAttack : MonoBehaviour {
 
 					punching = katana.activeSelf;
 					if (punching) {
-						Debug.Log("TODO");
+						
 					}
 					else {
 						katanaScript.throwing = false;

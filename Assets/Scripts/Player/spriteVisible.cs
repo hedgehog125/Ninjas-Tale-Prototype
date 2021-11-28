@@ -17,6 +17,9 @@ public class spriteVisible : MonoBehaviour {
 	[SerializeField] private float walkBobSpeed;
 	[SerializeField] private float walkBobAmount;
 
+	[Header("Audio")]
+	[SerializeField] private AudioSource walkSound;
+
 
 	private Rigidbody2D rb;
     private SpriteRenderer ren;
@@ -53,6 +56,7 @@ public class spriteVisible : MonoBehaviour {
         newScale.y = Mathf.Max(Mathf.Min(1.0f - currentStretch, 1 + maxStretch), 1 - maxStretch);
         stretchVel *= stretchMaintenance;
 
+		float bobTickWas = walkBobTick;
 		if (playerScript.moveInputNeutralX || (! playerScript.wasOnGround)) {
 			if (walkAnimation) {
 				if (walkAnimationEnding) {
@@ -75,7 +79,11 @@ public class spriteVisible : MonoBehaviour {
 			walkAnimationEnding = true;
 			walkAnimation = true;
 		}
-		transform.localPosition = new Vector3(transform.localPosition.x, Mathf.Sin(walkBobTick) * walkBobAmount);
+		float offset = Mathf.Sin(walkBobTick) * walkBobAmount;
+		if (offset < 0 && Mathf.Sin(bobTickWas) * walkBobAmount > 0) {
+			walkSound.Play();
+		}
+		transform.localPosition = new Vector3(transform.localPosition.x, offset);
 
 
 		transform.localScale = newScale;

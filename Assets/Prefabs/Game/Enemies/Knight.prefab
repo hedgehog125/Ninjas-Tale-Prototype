@@ -157,10 +157,10 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: -0.5, y: -0.025}
-      - {x: -0.5, y: 0.025}
-      - {x: 20, y: 1.5}
-      - {x: 20, y: -1.5}
+    - - {x: 0, y: -0.025}
+      - {x: 0, y: 0.025}
+      - {x: 14.65, y: 1.25}
+      - {x: 14.65, y: -1.25}
 --- !u!114 &4619379477902701216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -664,7 +664,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 30166
+  m_InstanceId: 41224
 --- !u!114 &2560374493410708009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,8 +697,6 @@ MonoBehaviour:
   maxFallDistance: 10
   spotTime: 20
   spotCancelSpeed: 0.25
-  searchTick: 0
-  state: 0
 --- !u!61 &1280104366540566101
 BoxCollider2D:
   m_ObjectHideFlags: 0

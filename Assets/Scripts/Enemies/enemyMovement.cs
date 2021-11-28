@@ -231,7 +231,9 @@ public class enemyMovement : MonoBehaviour {
 					GiveUp();
 				}
 				else {
-					MoveTick(ref vel, knownPlayerPosition);
+					if (MoveTick(ref vel, knownPlayerPosition)[0] && (! lineOfSight)) {
+						StartSearching();
+					}
 				}
 			}
 		}
@@ -305,6 +307,12 @@ public class enemyMovement : MonoBehaviour {
 
 	private bool[] MoveTick(ref Vector2 vel, Vector2 target) {
 		bool[] toReturn = new bool[2];
+
+		if (Mathf.Abs(target.x - transform.position.x) < 0.1f) {
+			vel.x *= stopMaintainance;
+			toReturn[0] = true;
+			return toReturn;
+		}
 		direction = target.x > transform.position.x;
 		bool wallInFront = false;
 		if (isOnGround) {
@@ -325,7 +333,7 @@ public class enemyMovement : MonoBehaviour {
 			}
 		}
 
-		if (wallInFront) { // Hit an obstacle
+		if (wallInFront && Mathf.Abs(target.x - transform.position.x) > 0.8f) { // Hit an obstacle
 			if (state != States.Default) {
 				if (triedJumpingObstacle && isOnGround && vel.y <= 0) {
 					direction = ! direction;
