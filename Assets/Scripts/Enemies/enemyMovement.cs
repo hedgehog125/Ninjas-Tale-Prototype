@@ -5,6 +5,7 @@ using UnityEngine;
 public class enemyMovement : MonoBehaviour {
 	[Header("Objects and References")]
 	[SerializeField] private GameObject playerObject;
+	[SerializeField] private cameraController cameraScript;
 	[SerializeField] private GameObject visionCone;
 	[SerializeField] private enemyCollisionCheck largeHitboxScript;
 	[SerializeField] private GameObject playerWasObject;
@@ -412,6 +413,13 @@ public class enemyMovement : MonoBehaviour {
         }
 		else if (state == States.Returning) {
 			ReturnTick(ref vel, lineOfSight);
+		}
+
+		if (state == States.Attacking) {
+			cameraScript.inCombat = true;
+		}
+		else if (state == States.Searching) {
+			cameraScript.enemiesSearching = true;
 		}
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), running? maxRunSpeed : maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
