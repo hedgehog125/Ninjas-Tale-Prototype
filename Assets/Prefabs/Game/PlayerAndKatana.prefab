@@ -148,7 +148,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.575, z: 0}
   m_ShapePathHash: 593888609
   m_Mesh: {fileID: 0}
-  m_InstanceId: 55000
+  m_InstanceId: 64830
 --- !u!82 &1470723388895970270
 AudioSource:
   m_ObjectHideFlags: 0
@@ -495,7 +495,7 @@ MonoBehaviour:
   maxHoldTime: 250
   windSound: {fileID: 3404283470636318461}
   normalWindVolume: 0.2
-  holdWindVolume: 0.7
+  holdWindVolume: 0.4
   target: {x: 0, y: 0}
   throwing: 0
   heightOffset: 0.2
@@ -1381,7 +1381,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 141686e0a6dcc4b7db0b465783cc3c57, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.6
+  m_Volume: 0.5
   m_Pitch: 1
   Loop: 0
   Mute: 0

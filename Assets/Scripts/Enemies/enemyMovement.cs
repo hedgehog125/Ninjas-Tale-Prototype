@@ -6,6 +6,7 @@ public class enemyMovement : MonoBehaviour {
 	[Header("Objects and References")]
 	[SerializeField] private GameObject playerObject;
 	[SerializeField] private cameraController cameraScript;
+	[SerializeField] private musicController musicScript;
 	[SerializeField] private GameObject visionCone;
 	[SerializeField] private enemyCollisionCheck largeHitboxScript;
 	[SerializeField] private GameObject playerWasObject;
@@ -49,6 +50,7 @@ public class enemyMovement : MonoBehaviour {
 	private int playerTouching;
 	private bool running;
 	private bool isOnGround;
+	private bool jumpedSinceGround;
 
 	private Vector2 knownPlayerPosition;
 	private Vector2 knownPlayerVel;
@@ -70,6 +72,8 @@ public class enemyMovement : MonoBehaviour {
 
 	private bool searchDirection;
 	private bool searchTurned;
+
+	private int inCombatTick;
 
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("PlayerMain")) {
@@ -169,12 +173,19 @@ public class enemyMovement : MonoBehaviour {
 				else {
 					Spotted(ref vel);
 					return true;
-                }
+				}
 			}
 			else if (state == States.Default) {
 				spotTick -= spotCancelSpeed;
 				if (spotTick < 0) spotTick = 0;
 			}
+
+			distance = playerWasObject.transform.position - transform.position;
+			castDirection = distance.normalized;
+
+			position = visionCone.transform.position;
+			hit = Physics2D.Raycast(position, castDirection, distance.magnitude + 0.05f, groundLayer);
+			// TODO: save and use this value. Search when player was is detected but not the player
 		}
 		else if (state == States.Default) {
 			spotTick--;
@@ -210,7 +221,7 @@ public class enemyMovement : MonoBehaviour {
 				aboutToPathfind = false;
 			}
 
-			if (largeHitboxScript.inCollider && lineOfSight) { // Near to the known position
+			if (false) { // Near to the known position
 				if (checkBehindTick == 0) {
 					float difference = knownPlayerPosition.x - transform.position.x;
 					float steepness = Mathf.Abs((knownPlayerPosition.y / transform.position.y) / difference);
@@ -269,9 +280,10 @@ public class enemyMovement : MonoBehaviour {
 	private void Spotted(ref Vector2 vel) {
 		if (state != States.Attacking) {
 			spotTick = 0;
-			if (isOnGround) {
+			if (isOnGround && (! jumpedSinceGround)) {
 				surprisedJumpActive = true;
 				vel.y += jumpPower / 1.5f;
+				jumpedSinceGround = true;
 			}
 			if (state == States.Default) {
 				leaveDefaultDirection = direction;
@@ -341,9 +353,10 @@ public class enemyMovement : MonoBehaviour {
 					aboutToPathfind = true;
 				}
 			}
-			if (isOnGround) {
+			if (isOnGround && (! jumpedSinceGround)) {
 				vel.y += jumpPower;
 				triedJumpingObstacle = true;
+				jumpedSinceGround = true;
 			}
 		}
 		else {
@@ -401,6 +414,9 @@ public class enemyMovement : MonoBehaviour {
 		bool lineOfSight = DetectPlayer(ref vel);
 		running = state == States.Attacking;
 		isOnGround = DetectGround();
+		if (! isOnGround) {
+			jumpedSinceGround = false;
+		}
 
 		if (state == States.Default) {
 			DefaultState(ref vel);
@@ -415,8 +431,16 @@ public class enemyMovement : MonoBehaviour {
 			ReturnTick(ref vel, lineOfSight);
 		}
 
-		if (state == States.Attacking) {
+		if (state == States.Attacking && (lineOfSight || playerTouching != 0)) {
+			inCombatTick = musicScript.spotMusicCooldown;
+		}
+		else if (inCombatTick > 0) {
+			inCombatTick--;
+		}
+
+		if (inCombatTick != 0) {
 			cameraScript.inCombat = true;
+			musicScript.inCombat = true;
 		}
 		else if (state == States.Searching) {
 			cameraScript.enemiesSearching = true;
