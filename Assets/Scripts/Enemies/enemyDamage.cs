@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class enemyDamage : MonoBehaviour {
+    [Header("Objects")]
+    [SerializeField] private GameObject soundObject;
+    [SerializeField] private GameObject soundObjects;
+
+    [Header("")]
     [SerializeField] private int maxHealth;
     [SerializeField] private int invincibilityTime;
 
@@ -22,6 +27,16 @@ public class enemyDamage : MonoBehaviour {
             enemyDamager damager = source.GetComponent<enemyDamager>();
             if (damager != null) {
                 health -= damager.amount;
+
+                if (damager.sound != enemyDamager.Sounds.None) {
+                    GameObject instance = Instantiate(soundObject);
+                    instance.transform.parent = soundObjects.transform;
+                    instance.transform.position = transform.position;
+                    instance.transform.rotation = transform.rotation;
+
+                    instance.GetComponent<soundObjectPlayer>().Play(damager.sound);
+                }
+
                 if (health <= 0) {
                     Destroy(gameObject);
                     return;

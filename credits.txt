@@ -20,10 +20,10 @@ Knife sound (katanaHitEnemy): https://freesound.org/people/Aris621/sounds/435238
 Sword pulled (katanaTakeOut): https://freesound.org/people/jobro/sounds/74831/
 Sword put away (katanaPutAway): https://freesound.org/people/cribbler/sounds/381863/
 Wind, trimmed and fades added: https://freesound.org/people/Josethehedgehog/sounds/390380/
-Punch (hitEnemy), volume increased slightly: https://freesound.org/people/CastIronCarousel/sounds/216783/
+Punch (hitEnemy), volume increased: https://freesound.org/people/CastIronCarousel/sounds/216783/
 Land, trimmed: https://freesound.org/people/hordik/sounds/476114/
 Walk, trimmed: https://freesound.org/people/freefire66/sounds/175955/
-Jump, trimmed: https://freesound.org/people/ttttrr/sounds/509567/
+Jump, trimmed and pitch increased: https://freesound.org/people/ttttrr/sounds/509567/
 
 Switch (nightVisionSwitch): https://freesound.org/people/MastersDisaster/sounds/218115/
 Checkpoint: https://freesound.org/people/Deathscyp/sounds/506016/

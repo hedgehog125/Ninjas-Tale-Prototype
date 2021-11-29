@@ -29,6 +29,11 @@ public class katanaMovement : MonoBehaviour
 	[SerializeField] private int maxStuckTime;
 	[SerializeField] private int maxHoldTime;
 
+	[Header("Sounds")]
+	[SerializeField] private AudioSource windSound;
+	[SerializeField] private float normalWindVolume;
+	[SerializeField] private float holdWindVolume;
+
 
 	// Set by the player attack script
 	[HideInInspector] public Vector2 target;
@@ -131,6 +136,10 @@ public class katanaMovement : MonoBehaviour
 			holdTick = 0;
 			spinDirection = Random.Range(0, 2) == 0;
 			childLight.SetActive(true);
+
+			windSound.volume = normalWindVolume;
+			windSound.time = Random.Range(0, windSound.clip.length / 2f);
+			windSound.Play();
 		}
 		else {
 			MeleePosition();
@@ -167,6 +176,7 @@ public class katanaMovement : MonoBehaviour
 			if (attackScript.throwHoldInput) {
 				if (holdTick == maxHoldTime) {
 					returning = true;
+					windSound.Stop();
 				}
 				else {
 					holdTick++;
@@ -243,7 +253,7 @@ public class katanaMovement : MonoBehaviour
 			Vector2 size = attackScript.canThrowCol.bounds.size;
 
 			float distance = (size.x / 2) + 1.45f;
-			Vector2Int direction = playerScript.direction ? Vector2Int.right : Vector2Int.left;
+			Vector2Int direction = playerScript.direction? Vector2Int.right : Vector2Int.left;
 
 			RaycastHit2D raycast = Physics2D.BoxCast(center, size, 0, direction, distance, playerScript.groundLayer);
 			if (raycast.collider == null || raycast.distance > col.bounds.size.x / 2) {
@@ -253,14 +263,15 @@ public class katanaMovement : MonoBehaviour
 
 				transform.position = center + new Vector2(distance * direction.x, 0);
 
-				hasPassedTarget = true;
+				if (! hasPassedTarget) {
+					hasPassedTarget = true;
+                }
 				age = maxAge - 50;
 				stuckTick = 0;
 			}
 			else {
 				gameObject.SetActive(false);
 			}
-
 		}
 	}
 	private void MeleeTick() {
@@ -271,9 +282,19 @@ public class katanaMovement : MonoBehaviour
 		}
 	}
 
+	private void PlayWindSound() {
+		if (hasPassedTarget && (! returning)) {
+			windSound.volume = holdWindVolume;
+		}
+		else {
+			windSound.volume = normalWindVolume;
+		}
+	}
+
 	private void FixedUpdate() {
 		if (throwing) {
 			ThrowTick();
+			PlayWindSound();
 			rb.angularVelocity = Mathf.Abs(speed.magnitude) * (spinDirection ? rotationSpeed : -rotationSpeed);
 		}
 		else {

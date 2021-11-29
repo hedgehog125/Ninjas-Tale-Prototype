@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class enemyDamager : MonoBehaviour {
     [SerializeField] public int amount;
+    [SerializeField] public Sounds sound;
+    [HideInInspector] public enum Sounds {
+        None,
+        Katana
+    };
 
     private void Awake() {
         if (amount <= 0) {
