@@ -11,6 +11,7 @@ public class enemyMovement : MonoBehaviour {
 	[SerializeField] private enemyCollisionCheck largeHitboxScript;
 	[SerializeField] private GameObject playerWasObject;
 	[SerializeField] private LayerMask groundLayer;
+	[SerializeField] private LayerMask raycastLayers;
 
 	[Header("")]
 	[SerializeField] private List<Vector2Int> patrolPath;
@@ -161,7 +162,7 @@ public class enemyMovement : MonoBehaviour {
 			Vector2 castDirection = distance.normalized;
 
 			Vector2 position = visionCone.transform.position;
-			RaycastHit2D hit = Physics2D.Raycast(position, castDirection, distance.magnitude + 0.05f, groundLayer);
+			RaycastHit2D hit = Physics2D.Raycast(position, castDirection, distance.magnitude + 0.05f, raycastLayers);
 			if (hit.collider == null) { // There's line of sight
 				if (state == States.Default) {
 					spotTick++;
@@ -184,7 +185,7 @@ public class enemyMovement : MonoBehaviour {
 			castDirection = distance.normalized;
 
 			position = visionCone.transform.position;
-			hit = Physics2D.Raycast(position, castDirection, distance.magnitude + 0.05f, groundLayer);
+			hit = Physics2D.Raycast(position, castDirection, distance.magnitude + 0.05f, raycastLayers);
 			// TODO: save and use this value. Search when player was is detected but not the player
 		}
 		else if (state == States.Default) {
@@ -346,7 +347,8 @@ public class enemyMovement : MonoBehaviour {
 			}
 		}
 
-		if (wallInFront && Mathf.Abs(target.x - transform.position.x) > 0.8f) { // Hit an obstacle
+
+		if (wallInFront && Mathf.Abs(target.x - transform.position.x) >= 0.1f) { // Hit an obstacle
 			if (state != States.Default) {
 				if (triedJumpingObstacle && isOnGround && vel.y <= 0) {
 					direction = ! direction;
@@ -405,7 +407,7 @@ public class enemyMovement : MonoBehaviour {
 		size.y = 0.1f;
 		center.y += 0.1f - (col.bounds.size.y / 2);
 
-		RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.07f, groundLayer);
+		RaycastHit2D hit = Physics2D.BoxCast(center, size, 0, Vector2.down, 0.07f, raycastLayers);
 		return hit.collider != null;
 	}
 

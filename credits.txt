@@ -19,6 +19,8 @@ Spotted: Based on stealth, modified by me
 Knife sound (katanaHitEnemy): https://freesound.org/people/Aris621/sounds/435238/
 Sword pulled (katanaTakeOut): https://freesound.org/people/jobro/sounds/74831/
 Sword put away (katanaPutAway): https://freesound.org/people/cribbler/sounds/381863/
+Boomerang (swordSpin): https://freesound.org/people/UsuarioLeal/sounds/446450/
+
 Wind, trimmed and fades added: https://freesound.org/people/Josethehedgehog/sounds/390380/
 Punch (hitEnemy), volume increased: https://freesound.org/people/CastIronCarousel/sounds/216783/
 Land, trimmed: https://freesound.org/people/hordik/sounds/476114/

@@ -9,6 +9,7 @@ TagManager:
   - PlayerCollectSmall
   - Katana
   - LightOverride
+  - CameraIgnore
   layers:
   - Default
   - TransparentFX
@@ -23,8 +24,8 @@ TagManager:
   - LightDetector
   - EnemyVision
   - Music
-  - 
-  - 
+  - Enemies
+  - CameraCollide
   - 
   - 
   - 
