@@ -9,7 +9,11 @@ public class playerAttack : MonoBehaviour {
 	[SerializeField] private GameObject cameraObject;
 	[SerializeField] public BoxCollider2D canThrowCol; // Read by katana movement
 
+	[Header("Melee")]
+	[SerializeField] private bool enableKatana;
+
 	[Header("Throwing")]
+	[SerializeField] private bool enableThrowing;
 	[SerializeField] private int maxThrowBufferTime;
 	[SerializeField] private float minThrowDistance;
 
@@ -230,8 +234,12 @@ public class playerAttack : MonoBehaviour {
 			thrownSinceGround = false;
 			attackedSinceGround = false;
 		}
-		KatanaThrowTick(ref vel);
-		MeleeAttackTick(ref vel);
+		if (enableKatana) {
+			if (enableThrowing) {
+				KatanaThrowTick(ref vel);
+			}
+			MeleeAttackTick(ref vel);
+		}
 
 		rb.velocity = vel;
 	}
