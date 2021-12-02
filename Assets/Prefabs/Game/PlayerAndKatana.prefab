@@ -148,7 +148,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.575, z: 0}
   m_ShapePathHash: 593888609
   m_Mesh: {fileID: 0}
-  m_InstanceId: 41324
+  m_InstanceId: 61744
 --- !u!82 &1470723388895970270
 AudioSource:
   m_ObjectHideFlags: 0
@@ -860,7 +860,7 @@ MonoBehaviour:
   maxJumpBufferTime: 5
   jumpPower: 2.25
   jumpHoldCurveSteepness: 2
-  jumpSpeedBoost: 0.01
+  jumpSpeedBoost: 0.025
   downFallBoost: 0.6
   wallSlidingSpeed: 0.3
   minSlideTriggerSpeed: 0.1

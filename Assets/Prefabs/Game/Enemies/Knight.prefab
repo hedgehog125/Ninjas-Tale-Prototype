@@ -634,7 +634,7 @@ MonoBehaviour:
   m_HasRenderer: 0
   m_UseRendererSilhouette: 1
   m_CastsShadows: 1
-  m_SelfShadows: 1
+  m_SelfShadows: 0
   m_ApplyToSortingLayers: e36aa3f2c759a54e000000009fccadf4
   m_ShapePath:
   - {x: -0.325, y: -1.25, z: 0}
@@ -665,7 +665,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 36916
+  m_InstanceId: 42426
 --- !u!114 &2560374493410708009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -690,6 +690,8 @@ MonoBehaviour:
   raycastLayers:
     serializedVersion: 2
     m_Bits: 8200
+  startDirection: 0
+  isDummy: 0
   patrolPath: []
   delayTime: 50
   checkBehindTime: 25

@@ -6,6 +6,7 @@ The heart textures are based off of: https://www.kenney.nl/assets/pixel-platform
 I also used the tiles during prototyping
 
 MLG Sunglasses based off of the meme which can be found here: https://knowyourmeme.com/memes/deal-with-it (the copyright is ambiguous since it's a meme)
+Windows 12 (12.png) logo is the Windows 10 logo from Microsoft but flipped horizontally
 
 == Sounds ==
 = Music =

@@ -14,6 +14,8 @@ public class enemyMovement : MonoBehaviour {
 	[SerializeField] private LayerMask raycastLayers;
 
 	[Header("")]
+	[SerializeField] private bool startDirection;
+	[SerializeField] private bool isDummy;
 	[SerializeField] private List<Vector2Int> patrolPath;
 
 	[Header("Timings")]
@@ -106,6 +108,8 @@ public class enemyMovement : MonoBehaviour {
 		alertScript = playerObject.GetComponent<enemyAlerter>();
 		playerRb = playerObject.GetComponent<Rigidbody2D>();
 		coneScript = visionCone.GetComponent<playerConeDetector>();
+
+		direction = startDirection;
     }
 
     private void Start() {
@@ -413,39 +417,42 @@ public class enemyMovement : MonoBehaviour {
 
     private void FixedUpdate() {
 		Vector2 vel = rb.velocity;
-		bool lineOfSight = DetectPlayer(ref vel);
-		running = state == States.Attacking;
-		isOnGround = DetectGround();
-		if (! isOnGround) {
-			jumpedSinceGround = false;
-		}
 
-		if (state == States.Default) {
-			DefaultState(ref vel);
-		}
-		else if (state == States.Attacking) {
-			AttackState(ref vel, lineOfSight);
-		}
-		else if (state == States.Searching) {
-			SearchTick(ref vel, lineOfSight);
-        }
-		else if (state == States.Returning) {
-			ReturnTick(ref vel, lineOfSight);
-		}
+		if (! isDummy) {
+			bool lineOfSight = DetectPlayer(ref vel);
+			running = state == States.Attacking;
+			isOnGround = DetectGround();
+			if (!isOnGround) {
+				jumpedSinceGround = false;
+			}
 
-		if (state == States.Attacking && (lineOfSight || playerTouching != 0)) {
-			inCombatTick = musicScript.spotMusicCooldown;
-		}
-		else if (inCombatTick > 0) {
-			inCombatTick--;
-		}
+			if (state == States.Default) {
+				DefaultState(ref vel);
+			}
+			else if (state == States.Attacking) {
+				AttackState(ref vel, lineOfSight);
+			}
+			else if (state == States.Searching) {
+				SearchTick(ref vel, lineOfSight);
+			}
+			else if (state == States.Returning) {
+				ReturnTick(ref vel, lineOfSight);
+			}
 
-		if (inCombatTick != 0) {
-			cameraScript.inCombat = true;
-			musicScript.inCombat = true;
-		}
-		else if (state == States.Searching) {
-			cameraScript.enemiesSearching = true;
+			if (state == States.Attacking && (lineOfSight || playerTouching != 0)) {
+				inCombatTick = musicScript.spotMusicCooldown;
+			}
+			else if (inCombatTick > 0) {
+				inCombatTick--;
+			}
+
+			if (inCombatTick != 0) {
+				cameraScript.inCombat = true;
+				musicScript.inCombat = true;
+			}
+			else if (state == States.Searching) {
+				cameraScript.enemiesSearching = true;
+			}
 		}
 
 		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), running? maxRunSpeed : maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);

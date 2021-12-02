@@ -10,7 +10,7 @@ public class playerAttack : MonoBehaviour {
 	[SerializeField] public BoxCollider2D canThrowCol; // Read by katana movement
 
 	[Header("Melee")]
-	[SerializeField] private bool enableKatana;
+	[SerializeField] public bool enableKatana; // Can be enabled by the katana item
 
 	[Header("Throwing")]
 	[SerializeField] private bool enableThrowing;
