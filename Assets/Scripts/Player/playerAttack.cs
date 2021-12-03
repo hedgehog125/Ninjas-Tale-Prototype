@@ -234,7 +234,7 @@ public class playerAttack : MonoBehaviour {
 			thrownSinceGround = false;
 			attackedSinceGround = false;
 		}
-		if (enableKatana) {
+		if (enableKatana && moveScript.canControl) {
 			if (enableThrowing) {
 				KatanaThrowTick(ref vel);
 			}

@@ -7,6 +7,7 @@ public class playerMovement : MonoBehaviour {
 	[Header("Objects and Layers")]
 	[SerializeField] public LayerMask groundLayer; // Read by player attack script
 	[SerializeField] private GameObject ledgeGrabTester;
+	[SerializeField] private tutorialTextController tutorialScript;
 
 	[Header("Movement")]
 	[SerializeField] private float walkAcceleration;
@@ -80,6 +81,9 @@ public class playerMovement : MonoBehaviour {
 	[HideInInspector] public bool wasOnWall { get; private set; }
 	[HideInInspector] public bool wasOnGround { get; private set; }
 	[HideInInspector] public int jumpHoldTick { get; private set; }
+
+	// Read by attack script
+	[HideInInspector] public bool canControl { get; private set; }
 
 	// Modified by visual child
 	[HideInInspector] public bool direction = true;
@@ -454,13 +458,14 @@ public class playerMovement : MonoBehaviour {
     private void FixedUpdate() {
 		Vector2 vel = new Vector2(rb.velocity.x, rb.velocity.y);
 		yAcceleration = (vel - velWas).y;
+		canControl = (! tutorialScript.blocking) && damageScript.stunTick == 0;
 
 		bool isOnGround = GroundDetectTick();
 		bool[] outputs = DetectWallSlideTick(isOnGround);
 		bool isOnWall = outputs[0];
 		bool canLedgeGrab = outputs[1];
 
-		if (damageScript.stunTick == 0) {
+		if (canControl) {
 			if (ledgeGrabbing) {
 				LedgeGrabStateTick(ref vel);
 			}
