@@ -49,7 +49,7 @@ public class nightVisionGoggles : MonoBehaviour {
 		alertScript = GetComponent<enemyAlerter>();
 
 		minLightObjects = minLights.GetComponent<Light2D>();
-		minLightSky = minLights.transform.GetChild(0).GetComponent<Light2D>();
+		minLightSky = minLights.transform.GetChild(1).GetComponent<Light2D>();
 		originalMinLightObjects = minLightObjects.intensity;
 		originalMinLightSky = minLightSky.intensity;
 		darkImage = ren.sprite;
@@ -69,50 +69,52 @@ public class nightVisionGoggles : MonoBehaviour {
 
     private void Update() {
 		if (unlocked) {
-			if (!gogglesScript.animating) {
+			if (! gogglesScript.animating) {
 				if (gogglesInput) {
-					active = !active;
+					active = ! active;
 					gogglesScript.Toggle();
 
 					gogglesInput = false;
 				}
 			}
+		}
+		else {
+			active = false;
+		}
 
-			if (active) {
-				minLightSky.intensity = originalMinLightSky;
-				physicalLightAdd = 0;
+		if (active) {
+			minLightSky.intensity = originalMinLightSky;
+			physicalLightAdd = 0;
+		}
+		else {
+			if (alertScript.inLight) {
+				ren.sprite = lightImage;
+
+				minLightObjects.intensity -= lightAreaChangeSpeed * Time.deltaTime;
+				physicalLightAdd += lightAreaChangeSpeed * Time.deltaTime;
+				if (originalMinLightObjects - minLightObjects.intensity > lightAreaObjectReduce) {
+					minLightObjects.intensity = originalMinLightObjects - lightAreaObjectReduce;
+					physicalLightAdd = lightAreaObjectReduce;
+				}
+				minLightSky.intensity -= lightAreaChangeSpeed * Time.deltaTime;
+				if (originalMinLightSky - minLightSky.intensity > lightAreaSkyReduce) {
+					minLightSky.intensity = originalMinLightSky - lightAreaSkyReduce;
+				}
 			}
 			else {
-				if (alertScript.inLight) {
-					ren.sprite = lightImage;
+				ren.sprite = darkImage;
 
-					minLightObjects.intensity -= lightAreaChangeSpeed * Time.deltaTime;
-					physicalLightAdd += lightAreaChangeSpeed * Time.deltaTime;
-					if (originalMinLightObjects - minLightObjects.intensity > lightAreaObjectReduce) {
-						minLightObjects.intensity = originalMinLightObjects - lightAreaObjectReduce;
-						physicalLightAdd = lightAreaObjectReduce;
-					}
-					minLightSky.intensity -= lightAreaChangeSpeed * Time.deltaTime;
-					if (originalMinLightSky - minLightSky.intensity > lightAreaSkyReduce) {
-						minLightSky.intensity = originalMinLightSky - lightAreaSkyReduce;
-					}
+				minLightObjects.intensity += lightAreaChangeSpeed * Time.deltaTime;
+				physicalLightAdd -= lightAreaChangeSpeed * Time.deltaTime;
+				if (minLightObjects.intensity > originalMinLightObjects) {
+					minLightObjects.intensity = originalMinLightObjects;
+					physicalLightAdd = 0;
 				}
-				else {
-					ren.sprite = darkImage;
-
-					minLightObjects.intensity += lightAreaChangeSpeed * Time.deltaTime;
-					physicalLightAdd -= lightAreaChangeSpeed * Time.deltaTime;
-					if (minLightObjects.intensity > originalMinLightObjects) {
-						minLightObjects.intensity = originalMinLightObjects;
-						physicalLightAdd = 0;
-					}
-					minLightSky.intensity += lightAreaChangeSpeed * Time.deltaTime;
-					if (minLightSky.intensity > originalMinLightSky) {
-						minLightSky.intensity = originalMinLightSky;
-					}
+				minLightSky.intensity += lightAreaChangeSpeed * Time.deltaTime;
+				if (minLightSky.intensity > originalMinLightSky) {
+					minLightSky.intensity = originalMinLightSky;
 				}
 			}
 		}
-        
-    }
+	}
 }

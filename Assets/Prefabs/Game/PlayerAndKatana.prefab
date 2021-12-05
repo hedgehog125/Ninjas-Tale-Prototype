@@ -148,7 +148,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.575, z: 0}
   m_ShapePathHash: 593888609
   m_Mesh: {fileID: 0}
-  m_InstanceId: 61744
+  m_InstanceId: 36818
 --- !u!82 &1470723388895970270
 AudioSource:
   m_ObjectHideFlags: 0
@@ -847,6 +847,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   ledgeGrabTester: {fileID: 3079979591452635815}
+  tutorialScript: {fileID: 0}
   walkAcceleration: 1
   moveAirAcceleration: 0.5
   maxWalkSpeed: 5
@@ -968,7 +969,7 @@ MonoBehaviour:
   lightMultiplier: 0.05
   lightAreaSkyReduce: 0.5
   lightAreaObjectReduce: 0.1
-  lightAreaChangeSpeed: 2
+  lightAreaChangeSpeed: 1.75
   lightGlobalColor: {r: 0.8301887, g: 0.8301887, b: 0.8301887, a: 1}
   lightSkyColor: {r: 0, g: 0.699386, b: 0.8584906, a: 1}
   active: 0
