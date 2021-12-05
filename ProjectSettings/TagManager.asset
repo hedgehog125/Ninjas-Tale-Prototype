@@ -10,7 +10,6 @@ TagManager:
   - Katana
   - LightOverride
   - CameraIgnore
-  - GenerateShadowCasters
   layers:
   - Default
   - TransparentFX

@@ -47,7 +47,7 @@ GameObject:
   - component: {fileID: 1341166170126116275}
   m_Layer: 3
   m_Name: Standable
-  m_TagString: GenerateShadowCasters
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -415,8 +415,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   colliderTag: GenerateShadowCasters
-  shadowCasterPrefab: {fileID: 6978399672757735939, guid: 655439e2bb33de34abb633496d2b807d, type: 3}
-  shadowCastersContainer: {fileID: 1341166169836559388}
+  shadowCasterPrefab: {fileID: 0}
+  shadowCastersContainer: {fileID: 0}
   removePreviouslyGenerated: 1
 --- !u!1 &1341166171486105862
 GameObject:

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
@@ -113,7 +113,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
 
                 if (bottomInstance != null && topInstance != null) {
                     if (bottomInstance != topInstance && bottomInstance.transform.localScale.x == topInstance.transform.localScale.x) {
-
+                        
                         //merge! enlarge bottom instance...
 
                         bottomInstance.transform.localScale = new Vector3(bottomInstance.transform.localScale.x, bottomInstance.transform.localScale.y + 1.0f, 0.0f);
@@ -153,8 +153,8 @@ public class GridShadowCastersGenerator : MonoBehaviour {
 
         // get tile bounds
 
-        var bottomLeft = new Vector2(pos.x - 0.5f + margin, pos.y - 0.5f + margin);
-        var topRight = new Vector2(pos.x + 0.5f - margin, pos.y + 0.5f - margin);
+        var bottomLeft = new Vector2(pos.x - 0.5f + margin, pos.y + 0.5f - margin);
+        var topRight = new Vector2(pos.x + 0.5f - margin, pos.y - 0.5f + margin);
 
         //check for collisions
 
