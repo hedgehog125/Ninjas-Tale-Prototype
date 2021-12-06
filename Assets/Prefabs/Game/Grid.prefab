@@ -414,9 +414,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb9a92eeae4254612805fac26e5c3d2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colliderTag: GenerateShadowCasters
-  shadowCasterPrefab: {fileID: 0}
-  shadowCastersContainer: {fileID: 0}
+  tilemap: {fileID: 1341166170126116272}
+  shadowCasterPrefab: {fileID: 6978399672757735939, guid: 655439e2bb33de34abb633496d2b807d, type: 3}
+  shadowCastersContainer: {fileID: 1341166169836559388}
+  litRadius: 0.15
   removePreviouslyGenerated: 1
 --- !u!1 &1341166171486105862
 GameObject:

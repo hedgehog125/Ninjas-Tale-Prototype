@@ -35,3 +35,6 @@ Collect coin: https://freesound.org/people/SRJA_Gaming/sounds/543270/
 
 Bow, split into separate variation files: https://freesound.org/people/Benboncan/sounds/85019/
 Bow loading, volume increased: https://freesound.org/people/EminYILDIRIM/sounds/536067/
+
+== Code ==
+Shadow caster generator is heavilly based off of: https://www.reddit.com/r/Unity3D/comments/ewpoek/script_for_generating_shadowcaster2ds_for_tilemaps/
