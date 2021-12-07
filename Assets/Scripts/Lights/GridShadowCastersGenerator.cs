@@ -121,7 +121,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
                     Vector2 scale = instance.transform.localScale;
                     Vector2 position = instance.transform.localPosition;
 
-                    /*
+                    ///*
                     if (FalseOrOoB(hits, x - 1, y, countX, countY)) {
                         scale.x -= litRadius;
                         position.x += litRadius / 2;
@@ -138,7 +138,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
                         scale.y -= litRadius;
                         position.y -= litRadius / 2;
                     }
-                    */
+                    //*/
 
                     instance.transform.localScale = scale;
                     instance.transform.localPosition = position;
