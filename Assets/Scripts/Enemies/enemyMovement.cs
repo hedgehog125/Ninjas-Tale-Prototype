@@ -73,7 +73,7 @@ public class enemyMovement : MonoBehaviour {
 	private bool triedJumpingObstacle;
 	private bool aboutToGiveUp;
 	private int checkBehindTick;
-	private bool surprisedJumpActive;
+	[HideInInspector] public bool surprisedJumpActive { get; private set; } // Read by visible
 
 	private bool searchDirection;
 	private bool searchTurned;

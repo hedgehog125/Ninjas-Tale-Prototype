@@ -29,7 +29,7 @@ public class enemyVisible : MonoBehaviour {
 	}
 
 	private void LateUpdate() {
-		if (moveScript.state == enemyMovement.States.Attacking) {
+		if (moveScript.state == enemyMovement.States.Attacking && (! moveScript.surprisedJumpActive)) {
 			InitAttack();
 		}
 		else {
