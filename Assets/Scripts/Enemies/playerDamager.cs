@@ -5,14 +5,13 @@ using UnityEngine;
 public class playerDamager : MonoBehaviour
 {
 	[SerializeField] private int amount;
-	[SerializeField] private GameObject playerObject;
 	
 	private playerDamage damageScript;
 	private Collider2D col;
 
 
 	private void Awake() {
-		damageScript = playerObject.GetComponent<playerDamage>();
+		damageScript = GameObject.Find("Player").GetComponent<playerDamage>();
 		col = GetComponent<Collider2D>();
 
 		if (amount <= 0) {

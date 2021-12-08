@@ -12,6 +12,8 @@ public class enemyMovement : MonoBehaviour {
 	[SerializeField] private LayerMask groundLayer;
 	[SerializeField] private LayerMask raycastLayers;
 
+	[SerializeField] public GameObject katanaPrefab;
+
 	[Header("")]
 	[SerializeField] private bool startDirection;
 	[SerializeField] private bool isDummy;
@@ -91,15 +93,15 @@ public class enemyMovement : MonoBehaviour {
 	}
 
 
-	private enum States {
+	[HideInInspector] public enum States {
 		Default,
 		Searching,
 		Attacking,
 		Returning
     }
-	private States state;
+	[HideInInspector] public States state { get; private set; }
 
-    private void Awake() {
+	private void Awake() {
 		transform.position += transform.parent.transform.position;
 		transform.parent.transform.position = new Vector2();
 
@@ -275,7 +277,7 @@ public class enemyMovement : MonoBehaviour {
         }
 	}
 
-	private void ReturnTick(ref Vector2 vel, bool lineOfSight) {
+	private void ReturnTick(ref Vector2 vel) {
 		if (MoveTick(ref vel, returnPoint, false)[0]) {
 			state = States.Default;
 			direction = leaveDefaultDirection;
@@ -458,7 +460,7 @@ public class enemyMovement : MonoBehaviour {
 				SearchTick(ref vel, lineOfSight);
 			}
 			else if (state == States.Returning) {
-				ReturnTick(ref vel, lineOfSight);
+				ReturnTick(ref vel);
 			}
 
 			if (state == States.Attacking && (lineOfSight || playerTouching != 0)) {

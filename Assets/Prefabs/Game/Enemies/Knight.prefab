@@ -329,11 +329,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainObject: {fileID: 8813906594280648137}
-  torchLightPrefab: {fileID: 6541509676361408378, guid: bfcf8f0a0d1bc46069b06c64a4a70bf1, type: 3}
   images:
   - {fileID: 1094192170339759290, guid: 6dd11c01f6d3142b0943c75a5c1b96b0, type: 3}
   - {fileID: -2613538155533048208, guid: 6dd11c01f6d3142b0943c75a5c1b96b0, type: 3}
   - {fileID: -7464676466040080541, guid: 6dd11c01f6d3142b0943c75a5c1b96b0, type: 3}
+  torchLightPrefab: {fileID: 6541509676361408378, guid: bfcf8f0a0d1bc46069b06c64a4a70bf1, type: 3}
 --- !u!1 &8401192675687473852
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,7 +573,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 49276
+  m_InstanceId: 24088
 --- !u!114 &2560374493410708009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -597,6 +597,7 @@ MonoBehaviour:
   raycastLayers:
     serializedVersion: 2
     m_Bits: 8200
+  katanaPrefab: {fileID: 5479247467378808612, guid: a835a4d4cdd054f4d947321f15f93c1e, type: 3}
   startDirection: 0
   isDummy: 0
   patrolPath: []
