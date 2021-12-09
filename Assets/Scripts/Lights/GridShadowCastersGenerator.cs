@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿/*
+using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine.Tilemaps;
@@ -17,7 +18,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
     public GameObject[] Generate() {
         Debug.Log("### Generating ShadowCasters ###");
 
-        /* get the bounds of the area to check */
+        // get the bounds of the area to check
 
         // get outer-most bound vertices, defining the area to check
 
@@ -27,7 +28,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
         Debug.Log("Bounds: downLeft = (" + bottomLeft.x + ", " + bottomLeft.y + ")");
         Debug.Log("Bounds: topRight = (" + topRight.x + ", " + topRight.y + ")");
 
-        /* check the area for collisions */
+        // Check the area for collisions
 
         int countX = Mathf.RoundToInt(topRight.x - bottomLeft.x);
         int countY = Mathf.RoundToInt(topRight.y - bottomLeft.y);
@@ -41,7 +42,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
             }
         }
 
-        /* instantiate shadow casters, merging single tiles horizontaly */
+        // instantiate shadow casters, merging single tiles horizontaly
 
         // removing old shadow casters! careful!
 
@@ -81,7 +82,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
             }
         }
 
-        /* merge vertically if they have the same dimensions */
+        // merge vertically if they have the same dimensions
 
         for (int y = 0; y < countY - 1; y++) { // -1 for skipping last row
             for (int x = 0; x < countX; x++) {
@@ -110,7 +111,7 @@ public class GridShadowCastersGenerator : MonoBehaviour {
 
         Debug.Log("ShadowCasters generated.");
 
-        /* return shadow casters */
+        // return shadow casters
 
         List<GameObject> shadowCasterInstances = new List<GameObject>();
 
@@ -121,7 +122,6 @@ public class GridShadowCastersGenerator : MonoBehaviour {
                     Vector2 scale = instance.transform.localScale;
                     Vector2 position = instance.transform.localPosition;
 
-                    ///*
                     if (FalseOrOoB(hits, x - 1, y, countX, countY)) {
                         scale.x -= litRadius;
                         position.x += litRadius / 2;
@@ -138,7 +138,6 @@ public class GridShadowCastersGenerator : MonoBehaviour {
                         scale.y -= litRadius;
                         position.y -= litRadius / 2;
                     }
-                    //*/
 
                     instance.transform.localScale = scale;
                     instance.transform.localPosition = position;
@@ -183,3 +182,4 @@ public class GridShadowCastersGeneratorEditor : Editor {
         }
     }
 }
+*/

@@ -364,7 +364,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1341166170305606574}
   - component: {fileID: 1341166170305606573}
-  - component: {fileID: 8030255540256801910}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -402,23 +401,6 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
---- !u!114 &8030255540256801910
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1341166170305606572}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fb9a92eeae4254612805fac26e5c3d2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  tilemap: {fileID: 1341166170126116272}
-  shadowCasterPrefab: {fileID: 6978399672757735939, guid: 655439e2bb33de34abb633496d2b807d, type: 3}
-  shadowCastersContainer: {fileID: 1341166169836559388}
-  litRadius: 0.15
-  removePreviouslyGenerated: 1
 --- !u!1 &1341166171486105862
 GameObject:
   m_ObjectHideFlags: 0
