@@ -89,7 +89,7 @@ public class playerMovement : MonoBehaviour {
 	[HideInInspector] public bool direction = true;
 
 	private Vector2 moveInput;
-	private bool jumpInput;
+	[HideInInspector] public bool jumpInput { get; private set; } // Read by tutorial boxes
 	private bool jumpBufferInput; // Set to false after jumping
 
 	[HideInInspector] public int coyoteTick; // Modified by attack script

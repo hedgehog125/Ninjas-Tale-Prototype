@@ -14,6 +14,9 @@ public class tutorialTextController : MonoBehaviour {
 	[Header("Timings")]
     [SerializeField] private int okPromptTime;
 
+	private playerMovement playerScript;
+
+
     private int okPromptTick;
     private bool okPressed;
 	private bool okHasPressed;
@@ -22,11 +25,12 @@ public class tutorialTextController : MonoBehaviour {
     [HideInInspector] public bool active { get; private set; }
 	[HideInInspector] public bool blocking { get; private set; }
 
-	private void OnSubmit(InputValue value) {
-        okPressed = value.isPressed;
-    }
+    private void Awake() {
+		playerScript = GameObject.Find("Player").GetComponent<playerMovement>();
+	}
 
     private void FixedUpdate() {
+		okPressed = playerScript.jumpInput;
 		if ((! small) && active) {
 			if (okPromptTick == okPromptTime) {
 				okPrompt.SetActive(true);
