@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class playerMovement : MonoBehaviour {
 	[Header("Objects and Layers")]
@@ -131,6 +132,13 @@ public class playerMovement : MonoBehaviour {
 	private void OnJump(InputValue input) {
 		jumpInput = input.isPressed;
 		jumpBufferInput = jumpInput;
+	}
+
+	private void OnTriggerEnter2D(Collider2D collision) {
+		loadingZoneController controller = collision.gameObject.GetComponent<loadingZoneController>();
+		if (controller != null) {
+			SceneManager.LoadScene(controller.target);
+		}
 	}
 
 

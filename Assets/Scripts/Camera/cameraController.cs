@@ -1,7 +1,6 @@
 using UnityEngine;
 
 public class cameraController : MonoBehaviour {
-    [SerializeField] private Transform player;
     [SerializeField] private int switchTime;
 
     [HideInInspector] public States state { get; private set; } = States.Default;
@@ -13,10 +12,14 @@ public class cameraController : MonoBehaviour {
     [HideInInspector] public bool inCombat;
     [HideInInspector] public bool enemiesSearching;
 
+    private Transform player;
+
     private Cinemachine.CinemachineVirtualCamera[] cameras;
     private int switchTick;
 
     private void Awake() {
+        player = GameObject.Find("Player").transform;
+
         int count = transform.childCount - 1;
         cameras = new Cinemachine.CinemachineVirtualCamera[count];
         for (int i = 0; i < count; i++) {

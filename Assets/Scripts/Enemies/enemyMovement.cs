@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class enemyMovement : MonoBehaviour {
 	[Header("Objects and References")]
-	[SerializeField] private GameObject playerObject;
-	[SerializeField] private cameraController cameraScript;
-	[SerializeField] private musicController musicScript;
 	[SerializeField] private GameObject visionCone;
 	[SerializeField] private GameObject playerWasObject;
 	[SerializeField] private LayerMask groundLayer;
@@ -46,6 +43,9 @@ public class enemyMovement : MonoBehaviour {
 	private Rigidbody2D rb;
 	private BoxCollider2D col;
 
+	private GameObject playerObject;
+	private cameraController cameraScript;
+	private musicController musicScript;
 	private enemyAlerter alertScript;
 	private BoxCollider2D playerCol;
 	private Rigidbody2D playerRb;
@@ -93,12 +93,13 @@ public class enemyMovement : MonoBehaviour {
 	}
 
 
-	[HideInInspector] public enum States {
+	[HideInInspector]
+	public enum States {
 		Default,
 		Searching,
 		Attacking,
 		Returning
-    }
+	}
 	[HideInInspector] public States state { get; private set; }
 
 	private void Awake() {
@@ -108,15 +109,20 @@ public class enemyMovement : MonoBehaviour {
 		rb = GetComponent<Rigidbody2D>();
 		col = GetComponent<BoxCollider2D>();
 
+		playerObject = GameObject.Find("Player");
+		cameraScript = GameObject.Find("Cameras").GetComponent<cameraController>();
+		musicScript = GameObject.Find("Music").GetComponent<musicController>();
+
+
 		alertScript = playerObject.GetComponent<enemyAlerter>();
 		playerCol = playerObject.GetComponent<BoxCollider2D>();
 		playerRb = playerObject.GetComponent<Rigidbody2D>();
 		coneScript = visionCone.GetComponent<playerConeDetector>();
 
 		direction = startDirection;
-    }
+	}
 
-    private void Start() {
+	private void Start() {
 		state = States.Default;
 		if (patrolPath.Count >= 2) {
 			currentPoint = 1;
@@ -125,7 +131,7 @@ public class enemyMovement : MonoBehaviour {
 		}
 		else if (patrolPath.Count == 0) {
 			patrolPath.Add(new Vector2Int((int)(transform.position.x - 0.5f), (int)(transform.position.y - 0.25f))); // So the enemy knows where to go back to after giving up searching
-        }
+		}
 	}
 
 	private void DefaultState(ref Vector2 vel) {
@@ -157,7 +163,7 @@ public class enemyMovement : MonoBehaviour {
 				}
 			}
 		}
-    }
+	}
 	private bool DetectPlayer(ref Vector2 vel) {
 		if (playerTouching != 0) {
 			Spotted(ref vel);
@@ -170,7 +176,7 @@ public class enemyMovement : MonoBehaviour {
 			Vector2 castDirection = distance.normalized;
 
 			Vector2 position = visionCone.transform.position;
-			position.x += direction? 0.5f : -0.5f;
+			position.x += direction ? 0.5f : -0.5f;
 			RaycastHit2D hit = Physics2D.Raycast(position, castDirection, distance.magnitude - 0.05f, raycastLayers);
 			if (hit.collider == null) { // There's line of sight
 				if (state == States.Default) {
@@ -227,7 +233,7 @@ public class enemyMovement : MonoBehaviour {
 			if (checkBehindTick != 0) {
 				if (lineOfSight) {
 					checkBehindTick = 0;
-                }
+				}
 				else {
 					if (isOnGround) {
 						if (checkBehindTick == checkBehindTime) {
@@ -237,15 +243,15 @@ public class enemyMovement : MonoBehaviour {
 						else {
 							checkBehindTick++;
 						}
-                    }
-                }
+					}
+				}
 			}
-			else if (aboutToGiveUp && (! lineOfSight)) {
+			else if (aboutToGiveUp && (!lineOfSight)) {
 				aboutToGiveUp = false;
 				GiveUp();
 			}
 
-			if (MoveTick(ref vel, knownPlayerPosition + new Vector2(pathfindPlayerSide? 1 : -1, 0), waitingForLanding || (! isOnGround))[0] && (! lineOfSight) && isOnGround) {
+			if (MoveTick(ref vel, knownPlayerPosition + new Vector2(pathfindPlayerSide ? 1 : -1, 0), waitingForLanding || (!isOnGround))[0] && (!lineOfSight) && isOnGround) {
 				StartSearching();
 			}
 		}
@@ -253,48 +259,48 @@ public class enemyMovement : MonoBehaviour {
 	private void SearchTick(ref Vector2 vel, bool lineOfSight) {
 		if (isOnGround) {
 			waitingForLanding = false;
-        }
+		}
 		if (lineOfSight) {
 			Spotted(ref vel);
 		}
 		else {
-			if (! waitingForLanding) {
+			if (!waitingForLanding) {
 				if (searchTick == maxSearchTime) {
 					GiveUp();
 				}
 				else {
 					searchTick++;
 				}
-            }
-        }
-		if (! waitingForLanding) {
-			if (MoveTick(ref vel, (Vector2)transform.position + new Vector2(searchDirection? 1 : -1, 0), false)[1]) {
-				if (! searchTurned) {
-					searchDirection = ! searchDirection;
+			}
+		}
+		if (!waitingForLanding) {
+			if (MoveTick(ref vel, (Vector2)transform.position + new Vector2(searchDirection ? 1 : -1, 0), false)[1]) {
+				if (!searchTurned) {
+					searchDirection = !searchDirection;
 					searchTurned = true;
 				}
 			}
-        }
+		}
 	}
 
 	private void ReturnTick(ref Vector2 vel) {
 		if (MoveTick(ref vel, returnPoint, false)[0]) {
 			state = States.Default;
 			direction = leaveDefaultDirection;
-        }
-    }
+		}
+	}
 
 	private void Spotted(ref Vector2 vel) {
 		if (state != States.Attacking) {
 			spotTick = 0;
-			if (isOnGround && (! jumpedSinceGround)) {
+			if (isOnGround && (!jumpedSinceGround)) {
 				vel.y += jumpPower / 1.5f;
 				surprisedJumpActive = true;
 				jumpedSinceGround = true;
 			}
 			else {
 				waitingForLanding = true;
-            }
+			}
 			if (state == States.Default) {
 				leaveDefaultDirection = direction;
 			}
@@ -313,18 +319,18 @@ public class enemyMovement : MonoBehaviour {
 				}
 				else {
 					pathfindPlayerSide = false;
-                }
+				}
 			}
 		}
 		knownPlayerPosition = playerObject.transform.position;
 		if (Mathf.Abs(playerRb.velocity.x) > 1.5f) {
 			knownPlayerVel = playerRb.velocity;
-        }
+		}
 	}
 	private void StartSearching() {
 		state = States.Searching;
 		searchTick = 0;
-		searchDirection = Mathf.Abs(knownPlayerVel.x) > 0.5f? knownPlayerVel.x > 0 : knownPlayerPosition.x > transform.position.x;
+		searchDirection = Mathf.Abs(knownPlayerVel.x) > 0.5f ? knownPlayerVel.x > 0 : knownPlayerPosition.x > transform.position.x;
 		searchTurned = false;
 		waitingForLanding = true;
 	}
@@ -339,11 +345,11 @@ public class enemyMovement : MonoBehaviour {
 			if (distance < closest) {
 				closest = distance;
 				closestID = i;
-            }
-        }
+			}
+		}
 		returnPoint = patrolPath[closestID] + new Vector2(0.5f, 0.25f);
 		currentPoint = closestID;
-    }
+	}
 
 	private bool[] MoveTick(ref Vector2 vel, Vector2 target, bool preventTurning) {
 		bool[] toReturn = new bool[2];
@@ -356,9 +362,9 @@ public class enemyMovement : MonoBehaviour {
 		bool pendingDirection = target.x > transform.position.x;
 		bool wallInFront = false;
 		if (isOnGround) {
-			RaycastHit2D hit = Physics2D.BoxCast(col.bounds.center, (Vector2)col.bounds.size - new Vector2(0, 0.05f), 0, pendingDirection? Vector2.right : Vector2.left, col.bounds.size.x, groundLayer);
+			RaycastHit2D hit = Physics2D.BoxCast(col.bounds.center, (Vector2)col.bounds.size - new Vector2(0, 0.05f), 0, pendingDirection ? Vector2.right : Vector2.left, col.bounds.size.x, groundLayer);
 			if (hit.collider == null) { // Make sure it's not in a wall
-				hit = Physics2D.BoxCast((Vector2)col.bounds.center + new Vector2(pendingDirection? 1 : -1, 0), new Vector2(0.1f, 0.1f), 0, Vector2.down, maxFallDistance, groundLayer);
+				hit = Physics2D.BoxCast((Vector2)col.bounds.center + new Vector2(pendingDirection ? 1 : -1, 0), new Vector2(0.1f, 0.1f), 0, Vector2.down, maxFallDistance, groundLayer);
 				if (hit.collider == null) {
 					lastPosition = transform.position;
 
@@ -370,6 +376,7 @@ public class enemyMovement : MonoBehaviour {
 			}
 			else {
 				wallInFront = true;
+				Debug.Log(hit.collider.gameObject.name);
 			}
 		}
 
@@ -378,12 +385,12 @@ public class enemyMovement : MonoBehaviour {
 			if (triedJumpingObstacle) {
 				if (state != States.Default) {
 					if (isOnGround && vel.y <= 0) {
-						pendingDirection = ! pendingDirection;
+						pendingDirection = !pendingDirection;
 						aboutToGiveUp = true;
 					}
 				}
 			}
-			else if (isOnGround && (! jumpedSinceGround)) {
+			else if (isOnGround && (!jumpedSinceGround)) {
 				vel.y += jumpPower;
 				triedJumpingObstacle = true;
 				jumpedSinceGround = true;
@@ -396,12 +403,12 @@ public class enemyMovement : MonoBehaviour {
 
 		bool canHavePassed = Mathf.Abs(target.x - lastMoveTarget) < 0.01f;
 		if (target.x > transform.position.x) {
-			if ((lastMoveSide || (! canHavePassed)) && ((! preventTurning) || direction == pendingDirection)) {
+			if ((lastMoveSide || (!canHavePassed)) && ((!preventTurning) || direction == pendingDirection)) {
 				lastMoveSide = true;
 				lastMoveTarget = target.x;
 				direction = pendingDirection;
 
-				vel.x += running? runAcceleration : walkAcceleration;
+				vel.x += running ? runAcceleration : walkAcceleration;
 			}
 			else { // Passed it
 				lastMoveTarget = target.x;
@@ -412,19 +419,19 @@ public class enemyMovement : MonoBehaviour {
 			}
 		}
 		else {
-            if (lastMoveSide && canHavePassed || (preventTurning && direction != pendingDirection)) { // Passed it
-                lastMoveSide = false;
-                lastMoveTarget = target.x;
+			if (lastMoveSide && canHavePassed || (preventTurning && direction != pendingDirection)) { // Passed it
+				lastMoveSide = false;
+				lastMoveTarget = target.x;
 
-                vel.x *= stopMaintainance;
+				vel.x *= stopMaintainance;
 				toReturn[0] = isOnGround;
 				return toReturn;
 			}
-            else {
-                lastMoveTarget = target.x;
+			else {
+				lastMoveTarget = target.x;
 				direction = pendingDirection;
 
-				vel.x -= running? runAcceleration : walkAcceleration;
+				vel.x -= running ? runAcceleration : walkAcceleration;
 			}
 		}
 		return toReturn;
@@ -439,14 +446,14 @@ public class enemyMovement : MonoBehaviour {
 		return hit.collider != null;
 	}
 
-    private void FixedUpdate() {
+	private void FixedUpdate() {
 		Vector2 vel = rb.velocity;
 
-		if (! isDummy) {
+		if (!isDummy) {
 			bool lineOfSight = DetectPlayer(ref vel);
 			running = state == States.Attacking;
 			isOnGround = DetectGround();
-			if (! isOnGround) {
+			if (!isOnGround) {
 				jumpedSinceGround = false;
 			}
 
@@ -479,11 +486,11 @@ public class enemyMovement : MonoBehaviour {
 			}
 		}
 
-		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), running? maxRunSpeed : maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
+		rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(vel.x), running ? maxRunSpeed : maxWalkSpeed) * Mathf.Sign(vel.x), vel.y);
 	}
 
-    private void LateUpdate() {
+	private void LateUpdate() {
 		knownPlayerPosition += knownPlayerVel * Time.deltaTime;
 		playerWasObject.transform.position = knownPlayerPosition;
-    }
+	}
 }

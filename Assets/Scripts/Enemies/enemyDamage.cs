@@ -5,11 +5,12 @@ using UnityEngine;
 public class enemyDamage : MonoBehaviour {
     [Header("Objects")]
     [SerializeField] private GameObject soundObject;
-    [SerializeField] private GameObject soundObjects;
 
     [Header("")]
     [SerializeField] private int maxHealth;
     [SerializeField] private int invincibilityTime;
+
+    private GameObject soundObjects;
 
     private int health;
     private int invincibilityTick;
@@ -46,7 +47,11 @@ public class enemyDamage : MonoBehaviour {
         }
     }
 
-    private void Start() {
+	private void Awake() {
+        soundObjects = GameObject.Find("SoundObjects");
+    }
+
+	private void Start() {
         health = maxHealth;
     }
 
