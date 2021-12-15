@@ -10,6 +10,7 @@ TagManager:
   - Katana
   - LightOverride
   - CameraIgnore
+  - Checkpoint
   layers:
   - Default
   - TransparentFX
@@ -27,7 +28,7 @@ TagManager:
   - Enemies
   - CameraCollide
   - EnemyItems
-  - 
+  - PlayerInteract
   - 
   - 
   - 

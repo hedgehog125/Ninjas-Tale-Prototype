@@ -135,9 +135,21 @@ public class playerMovement : MonoBehaviour {
 	}
 
 	private void OnTriggerEnter2D(Collider2D collision) {
-		loadingZoneController controller = collision.gameObject.GetComponent<loadingZoneController>();
-		if (controller != null) {
-			SceneManager.LoadScene(controller.target);
+		GameObject ob = collision.gameObject;
+		loadingZoneController itsLoadngController = ob.GetComponent<loadingZoneController>();
+		if (itsLoadngController != null) {
+			SceneManager.LoadScene(itsLoadngController.target);
+			return;
+		}
+
+		warpController itsWarpController = ob.GetComponent<warpController>();
+		if (itsWarpController != null) {
+			transform.position = itsWarpController.target;
+		}
+
+		checkpointController itsCheckpointController = ob.GetComponent<checkpointController>();
+		if (itsCheckpointController != null) {
+			damageScript.respawnLocation = ob.transform.position;
 		}
 	}
 

@@ -21,15 +21,14 @@ public class playerDamage : MonoBehaviour {
 
 	private int health;
 	private int invulnerabilityTick;
-	private Vector2 respawnLocation;
+	[HideInInspector] public Vector2 respawnLocation;
 
 	[HideInInspector] public int stunTick { get; private set; }
 
 
 	private void Awake() {
-		healthDisplay = healthObject.GetComponent<healthBarController>();
-
 		rb = GetComponent<Rigidbody2D>();
+		healthDisplay = healthObject.GetComponent<healthBarController>();
 
 		health = maxHealth;
 	}
@@ -50,19 +49,20 @@ public class playerDamage : MonoBehaviour {
         }
 	}
 
-	public void TakeDamage(int amount) {
-		TakeDamage(amount, Vector2.zero, null);
+	public bool TakeDamage(int amount) {
+		return TakeDamage(amount, Vector2.zero, null);
 	}
-	public void TakeDamage(int amount, Collider2D collider) {
-		TakeDamage(amount, collider.bounds.center, collider);
+	public bool TakeDamage(int amount, Collider2D collider) {
+		return TakeDamage(amount, collider.bounds.center, collider);
 	}
-	public void TakeDamage(int amount, Vector2 origin, Collider2D collider) {
-		if (invulnerabilityTick == 0) {
+	public bool TakeDamage(int amount, Vector2 origin, Collider2D collider) {
+		int healthWas = health;
+		if (invulnerabilityTick == 0 || amount < 0) {
 			health = Mathf.Clamp(health - amount, 0, maxHealth);
 			healthDisplay.health = health;
 		}
 
-		if (collider != null) {
+		if (collider != null && amount > 0) {
 			int knockbackX = 0;
 			int knockbackY = 1;
 			if (origin.x > transform.position.x + (collider.bounds.size.x / 2)) {
@@ -90,6 +90,7 @@ public class playerDamage : MonoBehaviour {
 				stunTick = stunTime;
 			}
 		}
+		return health != healthWas;
 	}
 
 	private void Die() {

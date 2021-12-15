@@ -6,7 +6,6 @@ public class enemyDamage : MonoBehaviour {
     [Header("Objects")]
     [SerializeField] private GameObject soundObject;
 
-    [Header("")]
     [SerializeField] private int maxHealth;
     [SerializeField] private int invincibilityTime;
 
@@ -14,6 +13,15 @@ public class enemyDamage : MonoBehaviour {
 
     private int health;
     private int invincibilityTick;
+
+    public void TakeDamage(int amount) {
+        health -= amount;
+        if (health <= 0) {
+            Destroy(gameObject);
+            return;
+        }
+        invincibilityTick = 1;
+    }
 
     private void OnTriggerEnter2D(Collider2D collision) {
         ProcessCollision(collision.gameObject);
@@ -27,8 +35,6 @@ public class enemyDamage : MonoBehaviour {
         if (invincibilityTick == 0) {
             enemyDamager damager = source.GetComponent<enemyDamager>();
             if (damager != null) {
-                health -= damager.amount;
-
                 if (damager.sound != enemyDamager.Sounds.None) {
                     GameObject instance = Instantiate(soundObject);
                     instance.transform.parent = soundObjects.transform;
@@ -38,11 +44,7 @@ public class enemyDamage : MonoBehaviour {
                     instance.GetComponent<soundObjectPlayer>().Play(damager.sound);
                 }
 
-                if (health <= 0) {
-                    Destroy(gameObject);
-                    return;
-                }
-                invincibilityTick = 1;
+                TakeDamage(damager.amount);
             }
         }
     }
