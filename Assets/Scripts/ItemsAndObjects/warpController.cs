@@ -4,4 +4,5 @@ using UnityEngine;
 
 public class warpController : MonoBehaviour {
 	[SerializeField] public Vector2 target;
+	[SerializeField] public int damage;
 }

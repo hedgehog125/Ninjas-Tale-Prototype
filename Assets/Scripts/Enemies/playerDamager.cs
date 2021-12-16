@@ -11,6 +11,7 @@ public class playerDamager : MonoBehaviour
 	private enemyDamage myDamageScript;
 	private Collider2D col;
 
+	private int playerTouching;
 
 	private void Awake() {
 		col = GetComponent<Collider2D>();
@@ -24,15 +25,18 @@ public class playerDamager : MonoBehaviour
 
 	private void OnTriggerEnter2D(Collider2D collision) {
 		if (collision.gameObject.CompareTag("PlayerMain")) {
-			if (damageScript.TakeDamage(amount, col) && myDamageScript != null) {
-				myDamageScript.TakeDamage(Mathf.CeilToInt(amount * playerThorns));
-			}
+			playerTouching++;
 		}
 	}
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("PlayerMain")) {
-			
-			if (damageScript.TakeDamage(amount, col)  && myDamageScript != null) {
+			playerTouching--;
+		}
+	}
+
+	private void FixedUpdate() {
+		if (playerTouching != 0) {
+			if (damageScript.TakeDamage(amount, col) && myDamageScript != null) {
 				myDamageScript.TakeDamage(Mathf.CeilToInt(amount * playerThorns));
 			}
 		}

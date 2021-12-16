@@ -543,7 +543,7 @@ MonoBehaviour:
   m_UseRendererSilhouette: 1
   m_CastsShadows: 1
   m_SelfShadows: 0
-  m_ApplyToSortingLayers: e36aa3f2c759a54e000000009fccadf4
+  m_ApplyToSortingLayers: e36aa3f27d68c9d0c759a54e000000009fccadf4
   m_ShapePath:
   - {x: -0.325, y: -1.25, z: 0}
   - {x: -0.175, y: -1.25, z: 0}
@@ -573,7 +573,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 24088
+  m_InstanceId: 82130
 --- !u!114 &2560374493410708009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -586,9 +586,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4812f726637fc6c49a2d2763eba5cba6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerObject: {fileID: 0}
-  cameraScript: {fileID: 0}
-  musicScript: {fileID: 0}
   visionCone: {fileID: 3831434062055122989}
   playerWasObject: {fileID: 8576740314965937146}
   groundLayer:
@@ -673,7 +670,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundObject: {fileID: 6811427007100716352, guid: 387c24dc336c7c04c93cebea56c5bb99, type: 3}
-  soundObjects: {fileID: 0}
   maxHealth: 1
   invincibilityTime: 50
 --- !u!114 &8786392750530922952

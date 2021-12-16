@@ -145,6 +145,9 @@ public class playerMovement : MonoBehaviour {
 		warpController itsWarpController = ob.GetComponent<warpController>();
 		if (itsWarpController != null) {
 			transform.position = itsWarpController.target;
+			if (itsWarpController.damage != 0) {
+				damageScript.TakeDamage(itsWarpController.damage, false);
+			}
 		}
 
 		checkpointController itsCheckpointController = ob.GetComponent<checkpointController>();

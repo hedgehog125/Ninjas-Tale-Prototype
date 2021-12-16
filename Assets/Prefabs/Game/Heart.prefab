@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8406373857267015130}
   - component: {fileID: 4619415331378538542}
   - component: {fileID: 6394607322612055993}
+  - component: {fileID: 6802017546303000346}
   m_Layer: 16
   m_Name: Heart
   m_TagString: Untagged
@@ -182,3 +183,16 @@ MonoBehaviour:
   soundObject: {fileID: 6811427007100716352, guid: 387c24dc336c7c04c93cebea56c5bb99, type: 3}
   maxHealth: 1
   invincibilityTime: 0
+--- !u!114 &6802017546303000346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8406373857267015111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae76119d3c5c50248aa79e61e3e8c0e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isSky: 0

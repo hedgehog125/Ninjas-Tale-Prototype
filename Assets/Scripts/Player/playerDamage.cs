@@ -50,12 +50,18 @@ public class playerDamage : MonoBehaviour {
 	}
 
 	public bool TakeDamage(int amount) {
-		return TakeDamage(amount, Vector2.zero, null);
+		return TakeDamage(amount, Vector2.zero, null, true);
+	}
+	public bool TakeDamage(int amount, bool stun) {
+		return TakeDamage(amount, Vector2.zero, null, stun);
 	}
 	public bool TakeDamage(int amount, Collider2D collider) {
-		return TakeDamage(amount, collider.bounds.center, collider);
+		return TakeDamage(amount, collider.bounds.center, collider, true);
 	}
-	public bool TakeDamage(int amount, Vector2 origin, Collider2D collider) {
+	public bool TakeDamage(int amount, Collider2D collider, bool stun) {
+		return TakeDamage(amount, collider.bounds.center, collider, stun);
+	}
+	public bool TakeDamage(int amount, Vector2 origin, Collider2D collider, bool stun) {
 		int healthWas = health;
 		if (invulnerabilityTick == 0 || amount < 0) {
 			health = Mathf.Clamp(health - amount, 0, maxHealth);
@@ -81,13 +87,15 @@ public class playerDamage : MonoBehaviour {
 			rb.velocity = vel;
 		}
 
-		if (invulnerabilityTick == 0) {
+		if (invulnerabilityTick == 0 && amount > 0) {
 			if (health == 0) {
 				Die();
 			}
 			else {
 				invulnerabilityTick = invulnerabilityTime;
-				stunTick = stunTime;
+				if (stun) {
+					stunTick = stunTime;
+				}
 			}
 		}
 		return health != healthWas;

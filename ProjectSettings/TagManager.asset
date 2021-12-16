@@ -29,7 +29,7 @@ TagManager:
   - CameraCollide
   - EnemyItems
   - PlayerInteract
-  - 
+  - ExcludePlayer
   - 
   - 
   - 

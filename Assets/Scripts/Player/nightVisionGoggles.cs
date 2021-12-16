@@ -12,7 +12,7 @@ public class nightVisionGoggles : MonoBehaviour {
 	[SerializeField] private SpriteRenderer ren;
 
 	[Header("")]
-	[SerializeField] private bool unlocked;
+	[SerializeField] public bool unlocked; // Can be set by goggles item
 
 	// Also read by the controller script
 	[Header("When Active")]

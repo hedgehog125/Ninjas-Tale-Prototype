@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 8403293529108491512}
   - component: {fileID: 9000211561066243199}
   - component: {fileID: 509173035567511024}
-  m_Layer: 0
+  m_Layer: 16
   m_Name: KatanaItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -157,9 +157,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -224171293
-  m_SortingLayer: -3
-  m_SortingOrder: 1
+  m_SortingLayerID: 1319459271
+  m_SortingLayer: -1
+  m_SortingOrder: 10
   m_Sprite: {fileID: 4239528737361974724, guid: a215642f6d809314989387ec533329c1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

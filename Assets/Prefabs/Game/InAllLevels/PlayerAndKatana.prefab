@@ -124,7 +124,7 @@ MonoBehaviour:
   m_UseRendererSilhouette: 1
   m_CastsShadows: 1
   m_SelfShadows: 0
-  m_ApplyToSortingLayers: e36aa3f2c759a54e000000009fccadf4
+  m_ApplyToSortingLayers: e36aa3f27d68c9d0c759a54e000000009fccadf4
   m_ShapePath:
   - {x: -0.325, y: -1, z: 0}
   - {x: -0.175, y: -1, z: 0}
@@ -148,7 +148,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.575, z: 0}
   m_ShapePathHash: 593888609
   m_Mesh: {fileID: 0}
-  m_InstanceId: 30928
+  m_InstanceId: 138214
 --- !u!82 &1470723388895970270
 AudioSource:
   m_ObjectHideFlags: 0
@@ -948,6 +948,7 @@ MonoBehaviour:
   deathPlaneY: -20
   stunTime: 35
   invulnerabilityTime: 125
+  respawnLocation: {x: 0, y: 0}
 --- !u!114 &3079979591641735369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -966,11 +967,11 @@ MonoBehaviour:
   ren: {fileID: 3079979591068491089}
   unlocked: 1
   lightGlobalIntensity: 0.9
-  lightMultiplier: 0.05
-  lightAreaSkyReduce: 0.5
+  lightMultiplier: 0.039
+  lightAreaSkyReduce: 0.55
   lightAreaObjectReduce: 0.1
   lightAreaChangeSpeed: 1.75
-  lightGlobalColor: {r: 0.8301887, g: 0.8301887, b: 0.8301887, a: 1}
+  lightGlobalColor: {r: 1, g: 1, b: 1, a: 1}
   lightSkyColor: {r: 0, g: 0.699386, b: 0.8584906, a: 1}
   active: 0
 --- !u!114 &3079979591641735366
