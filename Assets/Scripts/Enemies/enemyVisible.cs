@@ -6,6 +6,7 @@ public class enemyVisible : MonoBehaviour {
 	[Header("Objects and References")]
 	[SerializeField] private GameObject mainObject;
 	[SerializeField] private Sprite[] images;
+	[SerializeField] private Sprite dummyImage;
 	[SerializeField] private GameObject torchLightPrefab;
 
 
@@ -48,16 +49,21 @@ public class enemyVisible : MonoBehaviour {
 		}
 
 		int image = -1;
-		if (type == enemyType.Types.Normal) {
-			image = 0;
+		if (moveScript.isDummy) {
+			ren.sprite = dummyImage;
 		}
-		else if (type == enemyType.Types.Torch) {
-			image = 1;
-			item = Instantiate(torchLightPrefab, transform);
-		}
+		else {
+			if (type == enemyType.Types.Normal) {
+				image = 0;
+			}
+			else if (type == enemyType.Types.Torch) {
+				image = 1;
+				item = Instantiate(torchLightPrefab, transform);
+			}
 
-		if (image != -1) {
-			ren.sprite = images[image];
+			if (image != -1) {
+				ren.sprite = images[image];
+			}
 		}
 		attackState = false;
 	}

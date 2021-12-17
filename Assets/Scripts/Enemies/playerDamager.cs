@@ -28,7 +28,17 @@ public class playerDamager : MonoBehaviour
 			playerTouching++;
 		}
 	}
+	private void OnTriggerExit2D(Collider2D collision) {
+		if (collision.gameObject.CompareTag("PlayerMain")) {
+			playerTouching--;
+		}
+	}
 	private void OnCollisionEnter2D(Collision2D collision) {
+		if (collision.gameObject.CompareTag("PlayerMain")) {
+			playerTouching++;
+		}
+	}
+	private void OnCollisionExit2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("PlayerMain")) {
 			playerTouching--;
 		}

@@ -13,7 +13,7 @@ public class enemyMovement : MonoBehaviour {
 
 	[Header("")]
 	[SerializeField] private bool startDirection;
-	[SerializeField] private bool isDummy;
+	[SerializeField] public bool isDummy; // Read by visible
 	[SerializeField] private List<Vector2Int> patrolPath;
 
 	[Header("Timings")]

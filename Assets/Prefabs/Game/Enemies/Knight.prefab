@@ -333,6 +333,7 @@ MonoBehaviour:
   - {fileID: 1094192170339759290, guid: 6dd11c01f6d3142b0943c75a5c1b96b0, type: 3}
   - {fileID: -2613538155533048208, guid: 6dd11c01f6d3142b0943c75a5c1b96b0, type: 3}
   - {fileID: -7464676466040080541, guid: 6dd11c01f6d3142b0943c75a5c1b96b0, type: 3}
+  dummyImage: {fileID: 21300000, guid: c808c063958ba433fae66f24f890b7a4, type: 3}
   torchLightPrefab: {fileID: 6541509676361408378, guid: bfcf8f0a0d1bc46069b06c64a4a70bf1, type: 3}
 --- !u!1 &8401192675687473852
 GameObject:
@@ -573,7 +574,7 @@ MonoBehaviour:
   - {x: -0.325, y: -0.825, z: 0}
   m_ShapePathHash: 1584086524
   m_Mesh: {fileID: 0}
-  m_InstanceId: 82130
+  m_InstanceId: 372416
 --- !u!114 &2560374493410708009
 MonoBehaviour:
   m_ObjectHideFlags: 0
